@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { useTheme } from '../store/theme-store.ts';
 import type { ModuleType } from '../types/index.ts';
@@ -93,19 +93,67 @@ export function Rack() {
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const innerRef = useRef<HTMLDivElement>(null);
+  const spaceDown = useRef(false);
+  const [spaceHeld, setSpaceHeld] = useState(false);
+
+  // Track spacebar for space+drag panning
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        spaceDown.current = true;
+        setSpaceHeld(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        spaceDown.current = false;
+        setSpaceHeld(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      // Middle-click drag: always pan
       if (e.button === 1) {
         e.preventDefault();
         isPanning.current = true;
         panStart.current = { x: e.clientX, y: e.clientY, panX, panY };
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        return;
       }
-      if (e.button === 0 && pendingCable) {
+
+      if (e.button === 0) {
         const target = e.target as HTMLElement;
-        if (target === e.currentTarget || target === innerRef.current) {
-          cancelCable();
+        const isEmptySpace = target === e.currentTarget || target === innerRef.current;
+
+        // Space + left-click: pan from anywhere
+        if (spaceDown.current) {
+          e.preventDefault();
+          isPanning.current = true;
+          panStart.current = { x: e.clientX, y: e.clientY, panX, panY };
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          return;
+        }
+
+        // Left-click on empty space
+        if (isEmptySpace) {
+          if (pendingCable) {
+            cancelCable();
+          } else {
+            // Pan by dragging empty canvas
+            e.preventDefault();
+            isPanning.current = true;
+            panStart.current = { x: e.clientX, y: e.clientY, panX, panY };
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }
         }
       }
     },
@@ -136,8 +184,15 @@ export function Rack() {
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = -e.deltaY * ZOOM_SENSITIVITY;
-    setZoom((prev) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta * prev)));
+    // Pinch-to-zoom on trackpad (ctrlKey) or mouse wheel with no horizontal component
+    if (e.ctrlKey || (Math.abs(e.deltaX) < 1 && Math.abs(e.deltaY) > 0)) {
+      const delta = -e.deltaY * (e.ctrlKey ? ZOOM_SENSITIVITY * 3 : ZOOM_SENSITIVITY);
+      setZoom((prev) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta * prev)));
+    } else {
+      // Two-finger trackpad scroll → pan
+      setPanX((prev) => prev - e.deltaX);
+      setPanY((prev) => prev - e.deltaY);
+    }
   }, []);
 
   const zoomIn = useCallback(() => {
@@ -163,6 +218,7 @@ export function Rack() {
         overflow: 'hidden',
         position: 'relative',
         background: theme.gridBg,
+        cursor: spaceHeld ? 'grab' : undefined,
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
