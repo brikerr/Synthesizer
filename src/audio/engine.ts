@@ -21,6 +21,17 @@ import { createQuantizerNode } from './nodes/quantizer-node.ts';
 import { createWavefolderNode } from './nodes/wavefolder-node.ts';
 import { createSpectrumNode } from './nodes/spectrum-node.ts';
 import { createStepSequencerNode } from './nodes/step-sequencer-node.ts';
+import { createMacroKnobsNode } from './nodes/macro-knobs-node.ts';
+import { createProbabilityGateNode } from './nodes/probability-gate-node.ts';
+import { createEuclideanNode } from './nodes/euclidean-node.ts';
+import { createChorusNode } from './nodes/chorus-node.ts';
+import { createCompressorNode } from './nodes/compressor-node.ts';
+import { createEQNode } from './nodes/eq-node.ts';
+import { createFMOperatorNode } from './nodes/fm-operator-node.ts';
+import { createWavetableNode } from './nodes/wavetable-node.ts';
+import { createArpeggiatorNode } from './nodes/arpeggiator-node.ts';
+import { createGranularNode } from './nodes/granular-node.ts';
+import { createLooperNode } from './nodes/looper-node.ts';
 import { midiManager } from './midi-manager.ts';
 
 export class AudioEngine {
@@ -117,6 +128,39 @@ export class AudioEngine {
         break;
       case 'stepSequencer':
         node = createStepSequencerNode(ctx, params);
+        break;
+      case 'macroKnobs':
+        node = createMacroKnobsNode(ctx, params);
+        break;
+      case 'probabilityGate':
+        node = createProbabilityGateNode(ctx, params);
+        break;
+      case 'euclidean':
+        node = createEuclideanNode(ctx, params);
+        break;
+      case 'chorus':
+        node = createChorusNode(ctx, params);
+        break;
+      case 'compressor':
+        node = createCompressorNode(ctx, params);
+        break;
+      case 'eq':
+        node = createEQNode(ctx, params);
+        break;
+      case 'fmOperator':
+        node = createFMOperatorNode(ctx, params);
+        break;
+      case 'wavetable':
+        node = createWavetableNode(ctx, params);
+        break;
+      case 'arpeggiator':
+        node = createArpeggiatorNode(ctx, params);
+        break;
+      case 'granular':
+        node = createGranularNode(ctx, params);
+        break;
+      case 'looper':
+        node = createLooperNode(ctx, params);
         break;
       default:
         throw new Error(`Unknown module type: ${type}`);

@@ -23,6 +23,17 @@ import QuantizerPanel from './modules/QuantizerPanel.tsx';
 import WavefolderPanel from './modules/WavefolderPanel.tsx';
 import SpectrumPanel from './modules/SpectrumPanel.tsx';
 import StepSequencerPanel from './modules/StepSequencerPanel.tsx';
+import MacroKnobsPanel from './modules/MacroKnobsPanel.tsx';
+import ProbabilityGatePanel from './modules/ProbabilityGatePanel.tsx';
+import EuclideanPanel from './modules/EuclideanPanel.tsx';
+import ChorusPanel from './modules/ChorusPanel.tsx';
+import CompressorPanel from './modules/CompressorPanel.tsx';
+import EQPanel from './modules/EQPanel.tsx';
+import FMOperatorPanel from './modules/FMOperatorPanel.tsx';
+import WavetablePanel from './modules/WavetablePanel.tsx';
+import ArpeggiatorPanel from './modules/ArpeggiatorPanel.tsx';
+import GranularPanel from './modules/GranularPanel.tsx';
+import LooperPanel from './modules/LooperPanel.tsx';
 
 const PANEL_MAP: Record<ModuleType, React.ComponentType<{ moduleId: string }>> = {
   vco: VCOPanel,
@@ -43,6 +54,17 @@ const PANEL_MAP: Record<ModuleType, React.ComponentType<{ moduleId: string }>> =
   wavefolder: WavefolderPanel,
   spectrum: SpectrumPanel,
   stepSequencer: StepSequencerPanel,
+  macroKnobs: MacroKnobsPanel,
+  probabilityGate: ProbabilityGatePanel,
+  euclidean: EuclideanPanel,
+  chorus: ChorusPanel,
+  compressor: CompressorPanel,
+  eq: EQPanel,
+  fmOperator: FMOperatorPanel,
+  wavetable: WavetablePanel,
+  arpeggiator: ArpeggiatorPanel,
+  granular: GranularPanel,
+  looper: LooperPanel,
 };
 
 const MIN_ZOOM = 0.25;

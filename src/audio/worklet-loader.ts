@@ -16,6 +16,17 @@ import quantizerUrl from './processors/quantizer-processor.ts?url';
 import wavefolderUrl from './processors/wavefolder-processor.ts?url';
 import spectrumUrl from './processors/spectrum-processor.ts?url';
 import stepSequencerUrl from './processors/step-sequencer-processor.ts?url';
+import macroKnobsUrl from './processors/macro-knobs-processor.ts?url';
+import probabilityGateUrl from './processors/probability-gate-processor.ts?url';
+import euclideanUrl from './processors/euclidean-processor.ts?url';
+import chorusUrl from './processors/chorus-processor.ts?url';
+import compressorUrl from './processors/compressor-processor.ts?url';
+import eqUrl from './processors/eq-processor.ts?url';
+import fmOperatorUrl from './processors/fm-operator-processor.ts?url';
+import wavetableUrl from './processors/wavetable-processor.ts?url';
+import arpeggiatorUrl from './processors/arpeggiator-processor.ts?url';
+import granularUrl from './processors/granular-processor.ts?url';
+import looperUrl from './processors/looper-processor.ts?url';
 
 const processorUrls = [
   vcoUrl,
@@ -36,6 +47,17 @@ const processorUrls = [
   wavefolderUrl,
   spectrumUrl,
   stepSequencerUrl,
+  macroKnobsUrl,
+  probabilityGateUrl,
+  euclideanUrl,
+  chorusUrl,
+  compressorUrl,
+  eqUrl,
+  fmOperatorUrl,
+  wavetableUrl,
+  arpeggiatorUrl,
+  granularUrl,
+  looperUrl,
 ];
 
 export async function loadAllProcessors(ctx: AudioContext): Promise<void> {

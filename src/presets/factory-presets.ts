@@ -468,4 +468,322 @@ export const factoryPresets: Preset[] = [
       { sourceModuleId: 'm15', sourcePortId: 'mix_out', destModuleId: 'm16', destPortId: 'audio_in_left' },
     ],
   },
+
+  // ───────────────────────────────────────────────────
+  // 11. FM Electric Piano — two FM operators with chorus
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_fm_epiano',
+    name: 'FM E-Piano',
+    description: 'Classic FM electric piano with chorus and reverb',
+    category: 'keys',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 160, params: { octave: 0 } },
+      // Carrier operator
+      { id: 'm2', type: 'fmOperator', x: 540, y: 80, params: { frequency: 0, ratio: 1, fmIndex: 3, feedback: 0, waveform: 0 } },
+      // Modulator operator (ratio 2 = classic DX e-piano)
+      { id: 'm3', type: 'fmOperator', x: 300, y: 80, params: { frequency: 0, ratio: 2, fmIndex: 0, feedback: 0.1, waveform: 0 } },
+      // FM index envelope — decaying brightness
+      { id: 'm4', type: 'envelope', x: 300, y: 320, params: { attack: 0.001, decay: 0.6, sustain: 0.1, release: 0.4 } },
+      // Amp envelope
+      { id: 'm5', type: 'envelope', x: 540, y: 320, params: { attack: 0.001, decay: 1.2, sustain: 0.3, release: 0.8 } },
+      { id: 'm6', type: 'vca', x: 780, y: 80, params: { gain: 0.8 } },
+      { id: 'm7', type: 'chorus', x: 1020, y: 80, params: { rate: 1.2, depth: 0.4, mix: 0.35, voices: 2 } },
+      { id: 'm8', type: 'reverb', x: 1260, y: 80, params: { decay: 2.5, damping: 0.4, mix: 0.25 } },
+      { id: 'm9', type: 'output', x: 1500, y: 80, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // KB pitch → both operators
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm3', destPortId: 'pitch_cv' },
+      // KB gate → both envelopes
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm4', destPortId: 'gate_in' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm5', destPortId: 'gate_in' },
+      // Modulator → Carrier mod input
+      { sourceModuleId: 'm3', sourcePortId: 'modulator_out', destModuleId: 'm2', destPortId: 'modulator_in' },
+      // FM index envelope → Carrier index CV
+      { sourceModuleId: 'm4', sourcePortId: 'envelope_out', destModuleId: 'm2', destPortId: 'fm_index_cv' },
+      // Carrier → VCA
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      // Amp envelope → VCA
+      { sourceModuleId: 'm5', sourcePortId: 'envelope_out', destModuleId: 'm6', destPortId: 'cv_in' },
+      // VCA → Chorus → Reverb → Output
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 12. Wavetable Pad — morphing wavetable with slow LFO
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_wavetable_pad',
+    name: 'Wavetable Pad',
+    description: 'Evolving wavetable pad with morph modulation',
+    category: 'pad',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 160, params: { octave: 0 } },
+      { id: 'm2', type: 'wavetable', x: 300, y: 100, params: { frequency: 0, wavetableIndex: 0.3, octave: 0, detune: 0 } },
+      { id: 'm3', type: 'wavetable', x: 300, y: 300, params: { frequency: 0, wavetableIndex: 0.6, octave: 0, detune: 0.15 } },
+      // Slow morph LFO
+      { id: 'm4', type: 'lfo', x: 40, y: 400, params: { rate: 0.15, depth: 0.4, waveform: 0, rateModDepth: 0 } },
+      { id: 'm5', type: 'envelope', x: 540, y: 100, params: { attack: 0.6, decay: 0.5, sustain: 0.7, release: 1.2 } },
+      { id: 'm6', type: 'envelope', x: 540, y: 300, params: { attack: 0.6, decay: 0.5, sustain: 0.7, release: 1.2 } },
+      { id: 'm7', type: 'vca', x: 780, y: 100, params: { gain: 0.8 } },
+      { id: 'm8', type: 'vca', x: 780, y: 300, params: { gain: 0.8 } },
+      { id: 'm9', type: 'mixer', x: 1020, y: 160, params: { gain1: 0.7, gain2: 0.7, gain3: 0.8, gain4: 0.8, masterGain: 0.8 } },
+      { id: 'm10', type: 'chorus', x: 1260, y: 160, params: { rate: 0.8, depth: 0.5, mix: 0.3, voices: 3 } },
+      { id: 'm11', type: 'reverb', x: 1500, y: 160, params: { decay: 4.0, damping: 0.3, mix: 0.45 } },
+      { id: 'm12', type: 'output', x: 1740, y: 160, params: { masterVolume: 0.45 } },
+    ],
+    connections: [
+      // KB → wavetables
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm3', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm5', destPortId: 'gate_in' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm6', destPortId: 'gate_in' },
+      // LFO → both wavetable morph CVs
+      { sourceModuleId: 'm4', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'morph_cv' },
+      { sourceModuleId: 'm4', sourcePortId: 'lfo_out', destModuleId: 'm3', destPortId: 'morph_cv' },
+      // Wavetables → VCAs → Mixer
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'envelope_out', destModuleId: 'm7', destPortId: 'cv_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'envelope_out', destModuleId: 'm8', destPortId: 'cv_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'input_1' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'input_2' },
+      // Mixer → Chorus → Reverb → Output
+      { sourceModuleId: 'm9', sourcePortId: 'mix_out', destModuleId: 'm10', destPortId: 'audio_in' },
+      { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in' },
+      { sourceModuleId: 'm11', sourcePortId: 'audio_out', destModuleId: 'm12', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 13. Euclidean Techno — euclidean rhythms driving a mono synth
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_euclidean_techno',
+    name: 'Euclidean Techno',
+    description: 'Euclidean rhythm driving a filtered sawtooth',
+    category: 'sequencer',
+    isFactory: true,
+    version: 1,
+    modules: [
+      // Clock
+      { id: 'm1', type: 'lfo', x: 40, y: 120, params: { rate: 6, depth: 1.0, waveform: 3, rateModDepth: 0 } },
+      // Euclidean rhythm (5 hits in 8 steps)
+      { id: 'm2', type: 'euclidean', x: 280, y: 120, params: { steps: 8, hits: 5, rotation: 0, gateLength: 0.4 } },
+      // Random pitch via S&H
+      { id: 'm3', type: 'noise', x: 40, y: 350, params: { color: 0, level: 0.5 } },
+      { id: 'm4', type: 'sampleHold', x: 280, y: 350, params: { threshold: 0.5 } },
+      { id: 'm5', type: 'quantizer', x: 520, y: 350, params: { scale: 1, rootNote: 0 } },
+      // Synth voice
+      { id: 'm6', type: 'vco', x: 520, y: 80, params: { frequency: 0, waveform: 1, fmDepth: 0, pulseWidth: 0.5, pwmDepth: 0 } },
+      { id: 'm7', type: 'envelope', x: 760, y: 280, params: { attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.1 } },
+      { id: 'm8', type: 'vcf', x: 760, y: 80, params: { cutoff: 0.45, cutoffModDepth: 0.6, resonance: 0.5, resonanceModDepth: 0, mode: 0 } },
+      { id: 'm9', type: 'vca', x: 1000, y: 80, params: { gain: 0.8 } },
+      { id: 'm10', type: 'compressor', x: 1240, y: 80, params: { threshold: -15, ratio: 6, attack: 0.005, release: 0.08, makeupGain: 6 } },
+      { id: 'm11', type: 'delay', x: 1480, y: 80, params: { time: 0.25, feedback: 0.3, mix: 0.25, timeModDepth: 0 } },
+      { id: 'm12', type: 'output', x: 1720, y: 80, params: { masterVolume: 0.45 } },
+    ],
+    connections: [
+      // LFO → Euclidean clock
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'clock_in' },
+      // Euclidean gate → Envelope + S&H trigger
+      { sourceModuleId: 'm2', sourcePortId: 'gate_out', destModuleId: 'm7', destPortId: 'gate_in' },
+      { sourceModuleId: 'm2', sourcePortId: 'gate_out', destModuleId: 'm4', destPortId: 'trigger_in' },
+      // Noise → S&H → Quantizer → VCO pitch
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm4', destPortId: 'signal_in' },
+      { sourceModuleId: 'm4', sourcePortId: 'cv_out', destModuleId: 'm5', destPortId: 'cv_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'cv_out', destModuleId: 'm6', destPortId: 'pitch_cv' },
+      // VCO → VCF
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      // Envelope → VCF cutoff + VCA
+      { sourceModuleId: 'm7', sourcePortId: 'envelope_out', destModuleId: 'm8', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm7', sourcePortId: 'envelope_out', destModuleId: 'm9', destPortId: 'cv_in' },
+      // VCF → VCA → Compressor → Delay → Output
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in' },
+      { sourceModuleId: 'm9', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'audio_in' },
+      { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in' },
+      { sourceModuleId: 'm11', sourcePortId: 'audio_out', destModuleId: 'm12', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 14. Arp Synth — arpeggiator with filtered wavetable
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_arp_synth',
+    name: 'Arp Synth',
+    description: 'Keyboard arpeggiator with wavetable and delay',
+    category: 'lead',
+    isFactory: true,
+    version: 1,
+    modules: [
+      // Arpeggiator (receives notes from keyboard)
+      { id: 'm1', type: 'arpeggiator', x: 40, y: 120, params: { rate: 10, pattern: 0, octaveRange: 2, gateLength: 0.5 } },
+      { id: 'm2', type: 'wavetable', x: 300, y: 80, params: { frequency: 0, wavetableIndex: 0.35, octave: 0, detune: 0 } },
+      { id: 'm3', type: 'lfo', x: 40, y: 380, params: { rate: 0.25, depth: 0.3, waveform: 0, rateModDepth: 0 } },
+      { id: 'm4', type: 'envelope', x: 300, y: 320, params: { attack: 0.005, decay: 0.2, sustain: 0.4, release: 0.15 } },
+      { id: 'm5', type: 'vcf', x: 540, y: 80, params: { cutoff: 0.55, cutoffModDepth: 0.5, resonance: 0.3, resonanceModDepth: 0, mode: 0 } },
+      { id: 'm6', type: 'vca', x: 780, y: 80, params: { gain: 0.8 } },
+      { id: 'm7', type: 'delay', x: 1020, y: 80, params: { time: 0.3, feedback: 0.35, mix: 0.3, timeModDepth: 0 } },
+      { id: 'm8', type: 'reverb', x: 1260, y: 80, params: { decay: 2.0, damping: 0.5, mix: 0.2 } },
+      { id: 'm9', type: 'output', x: 1500, y: 80, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // Arp pitch/gate → Wavetable + Envelope
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_out', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_out', destModuleId: 'm4', destPortId: 'gate_in' },
+      // LFO → Wavetable morph
+      { sourceModuleId: 'm3', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'morph_cv' },
+      // Wavetable → VCF
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm5', destPortId: 'audio_in' },
+      // Envelope → VCF cutoff + VCA
+      { sourceModuleId: 'm4', sourcePortId: 'envelope_out', destModuleId: 'm5', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm4', sourcePortId: 'envelope_out', destModuleId: 'm6', destPortId: 'cv_in' },
+      // VCF → VCA → Delay → Reverb → Output
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 15. Granular Clouds — granular processing of a drone
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_granular_clouds',
+    name: 'Granular Clouds',
+    description: 'Self-playing granular texture with pitch shifting',
+    category: 'pad',
+    isFactory: true,
+    version: 1,
+    modules: [
+      // Source: slow evolving VCO
+      { id: 'm1', type: 'vco', x: 40, y: 100, params: { frequency: -1, waveform: 1, fmDepth: 0.05, pulseWidth: 0.5, pwmDepth: 0 } },
+      { id: 'm2', type: 'lfo', x: 40, y: 350, params: { rate: 0.08, depth: 0.1, waveform: 0, rateModDepth: 0 } },
+      // Granular processor
+      { id: 'm3', type: 'granular', x: 300, y: 100, params: { grainDensity: 15, grainSize: 0.15, spread: 0.7, pitch: 1.0, mix: 0.8 } },
+      // LFO to modulate grain density
+      { id: 'm4', type: 'lfo', x: 300, y: 350, params: { rate: 0.2, depth: 0.5, waveform: 0, rateModDepth: 0 } },
+      // EQ to shape the output
+      { id: 'm5', type: 'eq', x: 560, y: 100, params: { lowGain: -3, midGain: 2, highGain: -2, lowFreq: 150, highFreq: 6000 } },
+      { id: 'm6', type: 'reverb', x: 800, y: 100, params: { decay: 6.0, damping: 0.25, mix: 0.55 } },
+      { id: 'm7', type: 'output', x: 1040, y: 100, params: { masterVolume: 0.4 } },
+    ],
+    connections: [
+      // LFO1 → VCO FM (slow pitch drift)
+      { sourceModuleId: 'm2', sourcePortId: 'lfo_out', destModuleId: 'm1', destPortId: 'fm_cv' },
+      // VCO → Granular
+      { sourceModuleId: 'm1', sourcePortId: 'audio_out', destModuleId: 'm3', destPortId: 'audio_in' },
+      // LFO2 → Granular density CV
+      { sourceModuleId: 'm4', sourcePortId: 'lfo_out', destModuleId: 'm3', destPortId: 'density_cv' },
+      // Granular → EQ → Reverb → Output
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm5', destPortId: 'audio_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 16. Probability Beats — euclidean + probability gate
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_probability_beats',
+    name: 'Probability Beats',
+    description: 'Euclidean rhythm filtered by probability gate',
+    category: 'sequencer',
+    isFactory: true,
+    version: 1,
+    modules: [
+      // Clock
+      { id: 'm1', type: 'lfo', x: 40, y: 120, params: { rate: 5, depth: 1.0, waveform: 3, rateModDepth: 0 } },
+      // Two euclidean generators — melody + accent
+      { id: 'm2', type: 'euclidean', x: 280, y: 60, params: { steps: 8, hits: 5, rotation: 0, gateLength: 0.4 } },
+      { id: 'm3', type: 'euclidean', x: 280, y: 280, params: { steps: 8, hits: 3, rotation: 2, gateLength: 0.6 } },
+      // Probability gate on the accent pattern
+      { id: 'm4', type: 'probabilityGate', x: 520, y: 280, params: { probability: 0.6, mode: 0 } },
+      // Sound source
+      { id: 'm5', type: 'vco', x: 520, y: 60, params: { frequency: -0.5, waveform: 2, fmDepth: 0, pulseWidth: 0.5, pwmDepth: 0 } },
+      { id: 'm6', type: 'envelope', x: 760, y: 60, params: { attack: 0.003, decay: 0.12, sustain: 0.0, release: 0.08 } },
+      // Accent envelope (stronger + opens filter)
+      { id: 'm7', type: 'envelope', x: 760, y: 280, params: { attack: 0.001, decay: 0.08, sustain: 0.0, release: 0.05 } },
+      { id: 'm8', type: 'vcf', x: 1000, y: 60, params: { cutoff: 0.3, cutoffModDepth: 0.7, resonance: 0.6, resonanceModDepth: 0, mode: 0 } },
+      { id: 'm9', type: 'vca', x: 1240, y: 60, params: { gain: 0.8 } },
+      { id: 'm10', type: 'delay', x: 1480, y: 60, params: { time: 0.3, feedback: 0.3, mix: 0.2, timeModDepth: 0 } },
+      { id: 'm11', type: 'output', x: 1720, y: 60, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // LFO → both euclidean clocks
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'clock_in' },
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm3', destPortId: 'clock_in' },
+      // Euclidean 1 (melody) → main envelope
+      { sourceModuleId: 'm2', sourcePortId: 'gate_out', destModuleId: 'm6', destPortId: 'gate_in' },
+      // Euclidean 2 (accent) → probability gate → accent envelope
+      { sourceModuleId: 'm3', sourcePortId: 'gate_out', destModuleId: 'm4', destPortId: 'gate_in' },
+      { sourceModuleId: 'm4', sourcePortId: 'gate_out', destModuleId: 'm7', destPortId: 'gate_in' },
+      // VCO → VCF
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      // Main envelope → VCA, Accent envelope → VCF cutoff
+      { sourceModuleId: 'm6', sourcePortId: 'envelope_out', destModuleId: 'm9', destPortId: 'cv_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'envelope_out', destModuleId: 'm8', destPortId: 'cutoff_cv' },
+      // VCF → VCA → Delay → Output
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in' },
+      { sourceModuleId: 'm9', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'audio_in' },
+      { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 17. Mastered Mix — polyphonic through compressor + EQ chain
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_mastered_mix',
+    name: 'Mastered Mix',
+    description: 'Polyphonic saw with compressor and EQ mastering',
+    category: 'keys',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 200, params: { octave: 0 } },
+      // 2 voices for simplicity
+      { id: 'm2', type: 'vco', x: 300, y: 60, params: { frequency: 0, waveform: 1, fmDepth: 0, pulseWidth: 0.5, pwmDepth: 0 } },
+      { id: 'm3', type: 'vco', x: 300, y: 260, params: { frequency: 0, waveform: 1, fmDepth: 0, pulseWidth: 0.5, pwmDepth: 0 } },
+      { id: 'm4', type: 'envelope', x: 540, y: 60, params: { attack: 0.01, decay: 0.25, sustain: 0.6, release: 0.4 } },
+      { id: 'm5', type: 'envelope', x: 540, y: 260, params: { attack: 0.01, decay: 0.25, sustain: 0.6, release: 0.4 } },
+      { id: 'm6', type: 'vca', x: 780, y: 60, params: { gain: 0.8 } },
+      { id: 'm7', type: 'vca', x: 780, y: 260, params: { gain: 0.8 } },
+      { id: 'm8', type: 'mixer', x: 1020, y: 120, params: { gain1: 0.8, gain2: 0.8, gain3: 0.8, gain4: 0.8, masterGain: 1.0 } },
+      // Master chain: EQ → Compressor → Output
+      { id: 'm9', type: 'eq', x: 1260, y: 120, params: { lowGain: 2, midGain: -1, highGain: 3, lowFreq: 150, highFreq: 8000 } },
+      { id: 'm10', type: 'compressor', x: 1500, y: 120, params: { threshold: -12, ratio: 4, attack: 0.01, release: 0.15, makeupGain: 4 } },
+      { id: 'm11', type: 'output', x: 1740, y: 120, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // Voice 1
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm4', destPortId: 'gate_in' },
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      { sourceModuleId: 'm4', sourcePortId: 'envelope_out', destModuleId: 'm6', destPortId: 'cv_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'input_1' },
+      // Voice 2
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_2', destModuleId: 'm3', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_2', destModuleId: 'm5', destPortId: 'gate_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'envelope_out', destModuleId: 'm7', destPortId: 'cv_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'input_2' },
+      // Mixer → EQ → Compressor → Output
+      { sourceModuleId: 'm8', sourcePortId: 'mix_out', destModuleId: 'm9', destPortId: 'audio_in' },
+      { sourceModuleId: 'm9', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'audio_in' },
+      { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in_left' },
+    ],
+  },
 ];

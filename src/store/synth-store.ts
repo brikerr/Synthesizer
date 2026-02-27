@@ -360,9 +360,9 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
 
   noteOn: (midiNote: number) => {
     const state = get();
-    // Find all keyboard modules and send noteOn
+    // Find all keyboard and arpeggiator modules and send noteOn
     for (const mod of Object.values(state.modules)) {
-      if (mod.type === 'keyboard') {
+      if (mod.type === 'keyboard' || mod.type === 'arpeggiator') {
         audioEngine.noteOn(mod.id, midiNote);
       }
     }
@@ -371,7 +371,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   noteOff: (midiNote: number) => {
     const state = get();
     for (const mod of Object.values(state.modules)) {
-      if (mod.type === 'keyboard') {
+      if (mod.type === 'keyboard' || mod.type === 'arpeggiator') {
         audioEngine.noteOff(mod.id, midiNote);
       }
     }

@@ -16,10 +16,14 @@ const MODULE_GROUPS: ModuleGroup[] = [
     label: 'Sources',
     modules: [
       { type: 'vco', label: 'VCO' },
+      { type: 'fmOperator', label: 'FM Operator' },
+      { type: 'wavetable', label: 'Wavetable' },
       { type: 'noise', label: 'Noise' },
       { type: 'lfo', label: 'LFO' },
       { type: 'keyboard', label: 'Keyboard' },
       { type: 'stepSequencer', label: 'Sequencer' },
+      { type: 'euclidean', label: 'Euclidean' },
+      { type: 'arpeggiator', label: 'Arpeggiator' },
     ],
   },
   {
@@ -29,8 +33,11 @@ const MODULE_GROUPS: ModuleGroup[] = [
       { type: 'vca', label: 'VCA' },
       { type: 'mixer', label: 'Mixer' },
       { type: 'envelope', label: 'Envelope' },
+      { type: 'compressor', label: 'Compressor' },
+      { type: 'eq', label: 'EQ' },
       { type: 'quantizer', label: 'Quantizer' },
       { type: 'sampleHold', label: 'S&H' },
+      { type: 'probabilityGate', label: 'Prob Gate' },
     ],
   },
   {
@@ -38,8 +45,11 @@ const MODULE_GROUPS: ModuleGroup[] = [
     modules: [
       { type: 'delay', label: 'Delay' },
       { type: 'reverb', label: 'Reverb' },
+      { type: 'chorus', label: 'Chorus' },
       { type: 'ringMod', label: 'Ring Mod' },
       { type: 'wavefolder', label: 'Wavefolder' },
+      { type: 'granular', label: 'Granular' },
+      { type: 'looper', label: 'Looper' },
     ],
   },
   {
@@ -47,6 +57,7 @@ const MODULE_GROUPS: ModuleGroup[] = [
     modules: [
       { type: 'oscilloscope', label: 'Scope' },
       { type: 'spectrum', label: 'Spectrum' },
+      { type: 'macroKnobs', label: 'Macro Knobs' },
       { type: 'output', label: 'Output' },
     ],
   },

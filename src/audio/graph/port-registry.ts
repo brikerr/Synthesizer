@@ -325,6 +325,210 @@ const moduleDefinitions: Record<ModuleType, ModuleDefinition> = {
       { id: 'gate_out', name: 'Gate Out', direction: 'output', signal: 'gate', index: 1, description: 'Step gate output', suggestedTargets: ['Envelope', 'VCA'] },
     ],
   },
+  macroKnobs: {
+    type: 'macroKnobs',
+    label: 'Macro Knobs',
+    description: 'Four knobs outputting CV — control anything',
+    detailedDescription:
+      'Four general-purpose knobs that output CV signals. Use them to manually control any CV-accepting parameter on other modules. Great for performance control and macro assignments.',
+    defaultParams: {
+      macro1: 0,
+      macro2: 0,
+      macro3: 0,
+      macro4: 0,
+    },
+    ports: [
+      { id: 'cv_out_1', name: 'CV 1', direction: 'output', signal: 'cv', index: 0, description: 'CV output from Macro 1 knob', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+      { id: 'cv_out_2', name: 'CV 2', direction: 'output', signal: 'cv', index: 1, description: 'CV output from Macro 2 knob', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+      { id: 'cv_out_3', name: 'CV 3', direction: 'output', signal: 'cv', index: 2, description: 'CV output from Macro 3 knob', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+      { id: 'cv_out_4', name: 'CV 4', direction: 'output', signal: 'cv', index: 3, description: 'CV output from Macro 4 knob', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+    ],
+  },
+  probabilityGate: {
+    type: 'probabilityGate',
+    label: 'Prob Gate',
+    description: 'Random gate filtering — adds probability to triggers',
+    detailedDescription:
+      'Filters gate signals based on a probability setting. In Pass mode, gates pass through randomly. In Block mode, gates are randomly blocked. In Toggle mode, random chance flips the output state.',
+    defaultParams: {
+      probability: 0.5,
+      mode: 0,
+    },
+    ports: [
+      { id: 'gate_in', name: 'Gate In', direction: 'input', signal: 'gate', index: 0, description: 'Gate signal to filter', suggestedSources: ['LFO', 'Keyboard', 'Sequencer'] },
+      { id: 'probability_cv', name: 'Prob CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate probability via CV', suggestedSources: ['LFO', 'Envelope'] },
+      { id: 'gate_out', name: 'Gate Out', direction: 'output', signal: 'gate', index: 0, description: 'Filtered gate output', suggestedTargets: ['Envelope', 'VCA'] },
+    ],
+  },
+  euclidean: {
+    type: 'euclidean',
+    label: 'Euclidean',
+    description: 'Euclidean rhythm generator — mathematically optimal patterns',
+    detailedDescription:
+      'Generates rhythmic patterns using the Bjorklund/Euclidean algorithm. Distributes a number of hits as evenly as possible across a number of steps. Rotation shifts the pattern start point.',
+    defaultParams: {
+      steps: 8,
+      hits: 4,
+      rotation: 0,
+      gateLength: 0.5,
+    },
+    ports: [
+      { id: 'clock_in', name: 'Clock In', direction: 'input', signal: 'gate', index: 0, description: 'Clock trigger — advances to next step', suggestedSources: ['LFO'] },
+      { id: 'reset_in', name: 'Reset In', direction: 'input', signal: 'gate', index: 1, description: 'Reset to step 1', suggestedSources: ['LFO', 'Keyboard'] },
+      { id: 'gate_out', name: 'Gate Out', direction: 'output', signal: 'gate', index: 0, description: 'Euclidean gate pattern output', suggestedTargets: ['Envelope', 'VCA'] },
+    ],
+  },
+  chorus: {
+    type: 'chorus',
+    label: 'Chorus',
+    description: 'Chorus effect — adds richness with modulated delays',
+    detailedDescription:
+      'Creates a thicker sound by mixing the dry signal with multiple LFO-modulated short delays. Adjustable number of voices, rate, and depth for subtle shimmer to extreme detuning effects.',
+    defaultParams: {
+      rate: 1.5,
+      depth: 0.5,
+      mix: 0.5,
+      voices: 2,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to process', suggestedSources: ['VCA', 'VCF', 'Mixer'] },
+      { id: 'rate_cv', name: 'Rate CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate chorus rate via CV', suggestedSources: ['LFO'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Chorus-processed audio output', suggestedTargets: ['Reverb', 'Mixer', 'Output'] },
+    ],
+  },
+  compressor: {
+    type: 'compressor',
+    label: 'Compressor',
+    description: 'Compressor/limiter — controls dynamics',
+    detailedDescription:
+      'Reduces dynamic range by attenuating loud signals. Features adjustable threshold, ratio, attack/release times, and makeup gain. Optional sidechain input for ducking effects.',
+    defaultParams: {
+      threshold: -20,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.1,
+      makeupGain: 0,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to compress', suggestedSources: ['VCA', 'Mixer'] },
+      { id: 'sidechain_in', name: 'Sidechain', direction: 'input', signal: 'audio', index: 1, description: 'External sidechain input for keyed compression', suggestedSources: ['VCO', 'Noise'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Compressed audio output', suggestedTargets: ['Mixer', 'Output'] },
+    ],
+  },
+  eq: {
+    type: 'eq',
+    label: 'EQ',
+    description: '3-band equalizer — shape the frequency spectrum',
+    detailedDescription:
+      'Three-band parametric EQ with low shelf, peaking mid, and high shelf filters. Each band has +/-12dB gain. Low and high crossover frequencies are adjustable.',
+    defaultParams: {
+      lowGain: 0,
+      midGain: 0,
+      highGain: 0,
+      lowFreq: 200,
+      highFreq: 4000,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to equalize', suggestedSources: ['VCA', 'Mixer', 'VCF'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'EQ-processed audio output', suggestedTargets: ['Compressor', 'Mixer', 'Output'] },
+    ],
+  },
+  fmOperator: {
+    type: 'fmOperator',
+    label: 'FM Op',
+    description: 'FM synthesis operator — sine oscillator with modulation I/O',
+    detailedDescription:
+      'A single FM synthesis operator with pitch CV, modulator input, self-feedback, and dual outputs (audio + modulator). Chain multiple operators for complex FM synthesis. Ratio sets the frequency multiplier relative to the base pitch.',
+    defaultParams: {
+      frequency: 0,
+      ratio: 1,
+      fmIndex: 0,
+      feedback: 0,
+      waveform: 0,
+    },
+    ports: [
+      { id: 'pitch_cv', name: 'Pitch CV', direction: 'input', signal: 'cv', index: 0, description: 'Control pitch via CV (1V/oct)', suggestedSources: ['Keyboard', 'LFO'] },
+      { id: 'modulator_in', name: 'Mod In', direction: 'input', signal: 'audio', index: 1, description: 'Modulator input from another FM operator', suggestedSources: ['FM Op'] },
+      { id: 'fm_index_cv', name: 'Index CV', direction: 'input', signal: 'cv', index: 2, description: 'Modulate FM index via CV', suggestedSources: ['Envelope', 'LFO'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Main audio output', suggestedTargets: ['VCF', 'VCA', 'Mixer'] },
+      { id: 'modulator_out', name: 'Mod Out', direction: 'output', signal: 'audio', index: 1, description: 'Modulator output to chain to another FM operator', suggestedTargets: ['FM Op'] },
+    ],
+  },
+  wavetable: {
+    type: 'wavetable',
+    label: 'Wavetable',
+    description: 'Wavetable oscillator — morph between 7 waveforms',
+    detailedDescription:
+      'Oscillator with 7 pre-computed wavetables (sine, triangle, saw, square, supersaw, organ, vocal). Smoothly morph between adjacent tables using the Morph control. Features octave and detune controls.',
+    defaultParams: {
+      frequency: 0,
+      wavetableIndex: 0,
+      octave: 0,
+      detune: 0,
+    },
+    ports: [
+      { id: 'pitch_cv', name: 'Pitch CV', direction: 'input', signal: 'cv', index: 0, description: 'Control pitch via CV (1V/oct)', suggestedSources: ['Keyboard', 'LFO'] },
+      { id: 'morph_cv', name: 'Morph CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate wavetable morph position', suggestedSources: ['LFO', 'Envelope'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Wavetable audio output', suggestedTargets: ['VCF', 'VCA', 'Mixer'] },
+    ],
+  },
+  arpeggiator: {
+    type: 'arpeggiator',
+    label: 'Arpeggiator',
+    description: 'Arpeggiator — cycles through held notes in patterns',
+    detailedDescription:
+      'Receives notes from the keyboard and cycles through them in various patterns (up, down, up/down, random). Outputs pitch CV and gate signals. Can use internal clock or external clock input. Octave range expands the pattern across multiple octaves.',
+    defaultParams: {
+      rate: 8,
+      pattern: 0,
+      octaveRange: 1,
+      gateLength: 0.5,
+    },
+    ports: [
+      { id: 'clock_in', name: 'Clock In', direction: 'input', signal: 'gate', index: 0, description: 'External clock input (overrides internal clock)', suggestedSources: ['LFO'] },
+      { id: 'gate_in', name: 'Gate In', direction: 'input', signal: 'gate', index: 1, description: 'Gate input for triggering', suggestedSources: ['Keyboard'] },
+      { id: 'pitch_cv_out', name: 'Pitch CV', direction: 'output', signal: 'cv', index: 0, description: 'Arpeggiated pitch CV output (1V/oct)', suggestedTargets: ['VCO', 'FM Op', 'Wavetable'] },
+      { id: 'gate_out', name: 'Gate Out', direction: 'output', signal: 'gate', index: 1, description: 'Arpeggiated gate output', suggestedTargets: ['Envelope', 'VCA'] },
+    ],
+  },
+  granular: {
+    type: 'granular',
+    label: 'Granular',
+    description: 'Granular processor — time-stretches and pitch-shifts audio',
+    detailedDescription:
+      'Records incoming audio into a 4-second buffer and replays it as many small overlapping grains. Control grain density, size, spread, and pitch for time-stretching, texture creation, and pitch-shifting effects.',
+    defaultParams: {
+      grainDensity: 10,
+      grainSize: 0.1,
+      spread: 0.5,
+      pitch: 1,
+      mix: 0.5,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to granulate', suggestedSources: ['VCA', 'VCF', 'Mixer'] },
+      { id: 'density_cv', name: 'Density CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate grain density', suggestedSources: ['LFO', 'Envelope'] },
+      { id: 'size_cv', name: 'Size CV', direction: 'input', signal: 'cv', index: 2, description: 'Modulate grain size', suggestedSources: ['LFO'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Granular-processed audio output', suggestedTargets: ['Reverb', 'Mixer', 'Output'] },
+    ],
+  },
+  looper: {
+    type: 'looper',
+    label: 'Looper',
+    description: 'Looper/recorder — record and loop up to 10 seconds of audio',
+    detailedDescription:
+      'Records up to 10 seconds of audio and plays it back in a loop. Features variable speed, reverse playback, and dry/wet mix. Can be controlled via UI buttons or CV gate triggers.',
+    defaultParams: {
+      playbackSpeed: 1,
+      mix: 0.5,
+      reverse: 0,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to record', suggestedSources: ['VCA', 'Mixer'] },
+      { id: 'record_trigger', name: 'Rec Trig', direction: 'input', signal: 'gate', index: 1, description: 'Gate trigger to start/stop recording', suggestedSources: ['LFO', 'Keyboard'] },
+      { id: 'play_trigger', name: 'Play Trig', direction: 'input', signal: 'gate', index: 2, description: 'Gate trigger to start/stop playback', suggestedSources: ['LFO', 'Keyboard'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Looped audio output', suggestedTargets: ['Mixer', 'Output', 'Reverb'] },
+    ],
+  },
 };
 
 export function getModuleDefinition(type: ModuleType): ModuleDefinition {

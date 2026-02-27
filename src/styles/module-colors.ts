@@ -24,6 +24,17 @@ export const moduleColors: Record<ModuleType, ModuleColor> = {
   wavefolder:   { primary: '#D06030', secondary: '#E08050' },
   spectrum:     { primary: '#4088B0', secondary: '#60A0C8' },
   stepSequencer:{ primary: '#A068C0', secondary: '#B888D0' },
+  macroKnobs:   { primary: '#B0A050', secondary: '#C8B870' },
+  probabilityGate: { primary: '#C08050', secondary: '#D8A070' },
+  euclidean:    { primary: '#50A8C0', secondary: '#70C0D8' },
+  chorus:       { primary: '#6898C0', secondary: '#88B0D0' },
+  compressor:   { primary: '#A07048', secondary: '#B89068' },
+  eq:           { primary: '#48A090', secondary: '#68B8A8' },
+  fmOperator:   { primary: '#D08848', secondary: '#E0A868' },
+  wavetable:    { primary: '#C86848', secondary: '#E08868' },
+  arpeggiator:  { primary: '#A880C8', secondary: '#C0A0D8' },
+  granular:     { primary: '#78A858', secondary: '#98C078' },
+  looper:       { primary: '#C04060', secondary: '#D86080' },
 };
 
 export function getModuleColor(type: ModuleType): ModuleColor {

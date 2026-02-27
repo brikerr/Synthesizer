@@ -16,7 +16,18 @@ export type ModuleType =
   | 'quantizer'
   | 'wavefolder'
   | 'spectrum'
-  | 'stepSequencer';
+  | 'stepSequencer'
+  | 'macroKnobs'
+  | 'probabilityGate'
+  | 'euclidean'
+  | 'chorus'
+  | 'compressor'
+  | 'eq'
+  | 'fmOperator'
+  | 'wavetable'
+  | 'arpeggiator'
+  | 'granular'
+  | 'looper';
 
 export type SignalType = 'audio' | 'cv' | 'gate';
 
