@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { getModuleDefinition } from '../audio/graph/port-registry.ts';
 import { getModuleColor } from '../styles/module-colors.ts';
@@ -8,13 +8,34 @@ import Port from './controls/Port.tsx';
 import Tooltip from './hints/Tooltip.tsx';
 import type { PortDefinition } from '../types/index.ts';
 
+// Context for signal flow highlighting — provided by Rack, consumed by ModulePanel
+interface HighlightContextValue {
+  highlightedModuleIds: Set<string> | null;
+  onSelectModule: (moduleId: string) => void;
+}
+export const HighlightContext = createContext<HighlightContextValue>({
+  highlightedModuleIds: null,
+  onSelectModule: () => {},
+});
+
 interface ModulePanelProps {
   moduleId: string;
   children: React.ReactNode;
+  isHighlighted?: boolean;
+  onSelect?: () => void;
 }
 
-const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children }) => {
+const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlighted: isHighlightedProp, onSelect: onSelectProp }) => {
   const module = useSynthStore((s) => s.modules[moduleId]);
+  const { highlightedModuleIds, onSelectModule } = useContext(HighlightContext);
+
+  // Derive highlight state: props override context
+  const isHighlighted = isHighlightedProp !== undefined
+    ? isHighlightedProp
+    : highlightedModuleIds === null
+      ? undefined
+      : highlightedModuleIds.has(moduleId);
+  const onSelect = onSelectProp ?? (() => onSelectModule(moduleId));
   const removeModule = useSynthStore((s) => s.removeModule);
   const moveModule = useSynthStore((s) => s.moveModule);
   const startCable = useSynthStore((s) => s.startCable);
@@ -92,20 +113,30 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children }) => {
 
   return (
     <ModuleAccentContext.Provider value={colors}>
-      <div style={{
+      <div
+        onClick={(e) => {
+          if (!isDragging && onSelect) {
+            e.stopPropagation();
+            onSelect();
+          }
+        }}
+        style={{
         minWidth: 220,
         background: theme.glassBg,
         borderRadius: theme.panelRadius,
-        border: `1px solid ${isDragging ? colors.primary : theme.glassBorder}`,
+        border: `1px solid ${isDragging || isHighlighted === true ? colors.primary : theme.glassBorder}`,
         boxShadow: isDragging
           ? `${theme.glassShadow}, 0 0 16px ${colors.primary}30`
-          : theme.glassShadow,
+          : isHighlighted === true
+            ? `${theme.glassShadow}, 0 0 20px ${colors.primary}25`
+            : theme.glassShadow,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        transition: 'border-color 0.15s, box-shadow 0.15s',
+        transition: 'border-color 0.15s, box-shadow 0.15s, opacity 0.2s, filter 0.2s',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
+        ...(isHighlighted === false ? { opacity: 0.3, filter: 'grayscale(0.5)' } : {}),
       }}>
         <div
           style={{

@@ -51,9 +51,10 @@ interface CableProps {
   connection: CableConnection;
   containerEl: HTMLElement | null;
   tick: number;
+  isHighlighted?: boolean;
 }
 
-function Cable({ connection, containerEl, tick: _tick }: CableProps) {
+function Cable({ connection, containerEl, tick: _tick, isHighlighted }: CableProps) {
   const removeConnection = useSynthStore((s) => s.removeConnection);
   const theme = useTheme();
   const pathRef = useRef<SVGPathElement>(null);
@@ -159,34 +160,38 @@ function Cable({ connection, containerEl, tick: _tick }: CableProps) {
         ref={pathRef}
         d={d}
         stroke={color}
-        strokeWidth={theme.cableWidth}
+        strokeWidth={isHighlighted === true ? theme.cableWidth + 0.5 : theme.cableWidth}
         fill="none"
-        opacity={theme.cableOpacity}
+        opacity={isHighlighted === false ? 0.15 : isHighlighted === true ? 1 : theme.cableOpacity}
         strokeLinecap="round"
-        style={{ pointerEvents: 'stroke' }}
+        style={{ pointerEvents: 'stroke', transition: 'opacity 0.2s' }}
       />
       {/* Woven texture — lighter tint + darker shade, staggered */}
-      <path
-        ref={tex1Ref}
-        d={d}
-        stroke={`${color}88`}
-        strokeWidth={theme.cableWidth - 0.5}
-        fill="none"
-        strokeLinecap="round"
-        strokeDasharray="2 6"
-        style={{ pointerEvents: 'none' }}
-      />
-      <path
-        ref={tex2Ref}
-        d={d}
-        stroke="rgba(0,0,0,0.2)"
-        strokeWidth={theme.cableWidth - 0.5}
-        fill="none"
-        strokeLinecap="round"
-        strokeDasharray="2 6"
-        strokeDashoffset={3}
-        style={{ pointerEvents: 'none' }}
-      />
+      {isHighlighted !== false && (
+        <>
+          <path
+            ref={tex1Ref}
+            d={d}
+            stroke={`${color}88`}
+            strokeWidth={theme.cableWidth - 0.5}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray="2 6"
+            style={{ pointerEvents: 'none' }}
+          />
+          <path
+            ref={tex2Ref}
+            d={d}
+            stroke="rgba(0,0,0,0.2)"
+            strokeWidth={theme.cableWidth - 0.5}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray="2 6"
+            strokeDashoffset={3}
+            style={{ pointerEvents: 'none' }}
+          />
+        </>
+      )}
     </g>
   );
 }
@@ -246,9 +251,10 @@ function PendingCable({ containerEl, tick: _tick }: PendingCableProps) {
 
 interface CablesProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
+  highlightedConnectionIds?: Set<string>;
 }
 
-export function Cables({ containerRef }: CablesProps) {
+export function Cables({ containerRef, highlightedConnectionIds }: CablesProps) {
   const connections = useSynthStore((s) => s.connections);
   const modules = useSynthStore((s) => s.modules);
 
@@ -302,6 +308,7 @@ export function Cables({ containerRef }: CablesProps) {
           connection={conn}
           containerEl={containerEl}
           tick={tick}
+          isHighlighted={highlightedConnectionIds ? highlightedConnectionIds.has(conn.id) : undefined}
         />
       ))}
       <PendingCable containerEl={containerEl} tick={tick} />

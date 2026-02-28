@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { useTheme } from '../store/theme-store.ts';
 import type { ModuleType } from '../types/index.ts';
 import { Cables } from './Cables.tsx';
 import { AmbientBackground } from './AmbientBackground.tsx';
+import { HighlightContext } from './ModulePanel.tsx';
 
 import VCOPanel from './modules/VCOPanel.tsx';
 import VCFPanel from './modules/VCFPanel.tsx';
@@ -82,6 +83,7 @@ const canvasStyle: React.CSSProperties = {
 
 export function Rack() {
   const modules = useSynthStore((s) => s.modules);
+  const connections = useSynthStore((s) => s.connections);
   const pendingCable = useSynthStore((s) => s.pendingCable);
   const cancelCable = useSynthStore((s) => s.cancelCable);
   const theme = useTheme();
@@ -89,6 +91,59 @@ export function Rack() {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+
+  // BFS: compute highlighted module + connection sets from selected module
+  const { highlightedModuleIds, highlightedConnectionIds } = useMemo(() => {
+    if (!selectedModuleId) return { highlightedModuleIds: null, highlightedConnectionIds: null };
+
+    const connList = Object.values(connections);
+    const moduleSet = new Set<string>([selectedModuleId]);
+    const queue: string[] = [selectedModuleId];
+
+    // BFS upstream (follow dest → source)
+    const upQueue = [...queue];
+    while (upQueue.length > 0) {
+      const current = upQueue.shift()!;
+      for (const conn of connList) {
+        if (conn.dest.moduleId === current && !moduleSet.has(conn.source.moduleId)) {
+          moduleSet.add(conn.source.moduleId);
+          upQueue.push(conn.source.moduleId);
+        }
+      }
+    }
+
+    // BFS downstream (follow source → dest)
+    const downQueue = [selectedModuleId];
+    while (downQueue.length > 0) {
+      const current = downQueue.shift()!;
+      for (const conn of connList) {
+        if (conn.source.moduleId === current && !moduleSet.has(conn.dest.moduleId)) {
+          moduleSet.add(conn.dest.moduleId);
+          downQueue.push(conn.dest.moduleId);
+        }
+      }
+    }
+
+    // Connections where both endpoints are in the highlighted set
+    const connSet = new Set<string>();
+    for (const conn of connList) {
+      if (moduleSet.has(conn.source.moduleId) && moduleSet.has(conn.dest.moduleId)) {
+        connSet.add(conn.id);
+      }
+    }
+
+    return { highlightedModuleIds: moduleSet, highlightedConnectionIds: connSet };
+  }, [selectedModuleId, connections]);
+
+  const handleSelectModule = useCallback((moduleId: string) => {
+    setSelectedModuleId((prev) => (prev === moduleId ? null : moduleId));
+  }, []);
+
+  const highlightContextValue = useMemo(() => ({
+    highlightedModuleIds: highlightedModuleIds,
+    onSelectModule: handleSelectModule,
+  }), [highlightedModuleIds, handleSelectModule]);
 
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
@@ -145,6 +200,7 @@ export function Rack() {
 
         // Left-click on empty space
         if (isEmptySpace) {
+          setSelectedModuleId(null);
           if (pendingCable) {
             cancelCable();
           } else {
@@ -227,27 +283,29 @@ export function Rack() {
       onContextMenu={(e) => e.preventDefault()}
     >
       <AmbientBackground />
-      <div
-        ref={innerRef}
-        style={{
-          ...canvasStyle,
-          transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
-        }}
-      >
-        {moduleList.map((mod) => {
-          const Panel = PANEL_MAP[mod.type];
-          if (!Panel) return null;
-          return (
-            <div
-              key={mod.id}
-              style={{ position: 'absolute', left: mod.x, top: mod.y }}
-            >
-              <Panel moduleId={mod.id} />
-            </div>
-          );
-        })}
-        <Cables containerRef={innerRef} />
-      </div>
+      <HighlightContext.Provider value={highlightContextValue}>
+        <div
+          ref={innerRef}
+          style={{
+            ...canvasStyle,
+            transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+          }}
+        >
+          {moduleList.map((mod) => {
+            const Panel = PANEL_MAP[mod.type];
+            if (!Panel) return null;
+            return (
+              <div
+                key={mod.id}
+                style={{ position: 'absolute', left: mod.x, top: mod.y }}
+              >
+                <Panel moduleId={mod.id} />
+              </div>
+            );
+          })}
+          <Cables containerRef={innerRef} highlightedConnectionIds={highlightedConnectionIds ?? undefined} />
+        </div>
+      </HighlightContext.Provider>
 
       {/* Zoom controls */}
       <div style={{
