@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useAccentColor } from './ModuleAccentContext.tsx';
 import { useTheme } from '../../store/theme-store.ts';
+import { useHistoryStore } from '../../store/history-store.ts';
 
 interface KnobProps {
   label: string;
@@ -65,6 +66,7 @@ const Knob: React.FC<KnobProps> = ({
   const handleMouseUp = useCallback(() => {
     dragStateRef.current = null;
     setIsDragging(false);
+    useHistoryStore.getState().setDragging(false);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = '';
@@ -74,6 +76,7 @@ const Knob: React.FC<KnobProps> = ({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
+      useHistoryStore.getState().setDragging(true);
       dragStateRef.current = {
         startY: e.clientY,
         startValue: value,

@@ -38,6 +38,12 @@ select option {
   color: var(--select-option-text);
 }
 
+/* Recording pulse animation */
+@keyframes pulse-recording {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

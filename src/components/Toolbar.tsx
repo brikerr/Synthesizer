@@ -1,67 +1,15 @@
 import React from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { useTheme, useThemeStore } from '../store/theme-store.ts';
+import { useRecordingStore } from '../store/recording-store.ts';
 import { moduleColors } from '../styles/module-colors.ts';
 import type { ModuleType } from '../types/index.ts';
 import { midiManager } from '../audio/midi-manager.ts';
+import { audioEngine } from '../audio/engine.ts';
+import { encodeWav } from '../audio/wav-encoder.ts';
 import { PresetSelector } from './PresetSelector.tsx';
-
-interface ModuleGroup {
-  label: string;
-  modules: { type: ModuleType; label: string }[];
-}
-
-const MODULE_GROUPS: ModuleGroup[] = [
-  {
-    label: 'Sources',
-    modules: [
-      { type: 'vco', label: 'VCO' },
-      { type: 'fmOperator', label: 'FM Operator' },
-      { type: 'wavetable', label: 'Wavetable' },
-      { type: 'noise', label: 'Noise' },
-      { type: 'lfo', label: 'LFO' },
-      { type: 'keyboard', label: 'Keyboard' },
-      { type: 'stepSequencer', label: 'Sequencer' },
-      { type: 'euclidean', label: 'Euclidean' },
-      { type: 'arpeggiator', label: 'Arpeggiator' },
-    ],
-  },
-  {
-    label: 'Processing',
-    modules: [
-      { type: 'vcf', label: 'VCF' },
-      { type: 'vca', label: 'VCA' },
-      { type: 'mixer', label: 'Mixer' },
-      { type: 'envelope', label: 'Envelope' },
-      { type: 'compressor', label: 'Compressor' },
-      { type: 'eq', label: 'EQ' },
-      { type: 'quantizer', label: 'Quantizer' },
-      { type: 'sampleHold', label: 'S&H' },
-      { type: 'probabilityGate', label: 'Prob Gate' },
-    ],
-  },
-  {
-    label: 'Effects',
-    modules: [
-      { type: 'delay', label: 'Delay' },
-      { type: 'reverb', label: 'Reverb' },
-      { type: 'chorus', label: 'Chorus' },
-      { type: 'ringMod', label: 'Ring Mod' },
-      { type: 'wavefolder', label: 'Wavefolder' },
-      { type: 'granular', label: 'Granular' },
-      { type: 'looper', label: 'Looper' },
-    ],
-  },
-  {
-    label: 'Utility',
-    modules: [
-      { type: 'oscilloscope', label: 'Scope' },
-      { type: 'spectrum', label: 'Spectrum' },
-      { type: 'macroKnobs', label: 'Macro Knobs' },
-      { type: 'output', label: 'Output' },
-    ],
-  },
-];
+import { MODULE_GROUPS } from '../data/module-groups.ts';
+import { useCableLevelStore } from '../store/cable-level-store.ts';
 
 export function Toolbar() {
   const isAudioReady = useSynthStore((s) => s.isAudioReady);
@@ -72,9 +20,58 @@ export function Toolbar() {
   const themeName = useThemeStore((s) => s.themeName);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
+  const showVuMeters = useCableLevelStore((s) => s.showVuMeters);
+  const toggleVuMeters = useCableLevelStore((s) => s.toggleVuMeters);
+
   const [openGroup, setOpenGroup] = React.useState<string | null>(null);
   const [hoveredKey, setHoveredKey] = React.useState<string | null>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+
+  // Recording state
+  const isRecording = useRecordingStore((s) => s.isRecording);
+  const recordingElapsed = useRecordingStore((s) => s.elapsed);
+  const setRecording = useRecordingStore((s) => s.setRecording);
+  const setRecordingElapsed = useRecordingStore((s) => s.setElapsed);
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleToggleRecording = React.useCallback(() => {
+    if (isRecording) {
+      // Stop recording
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      setRecording(false);
+      audioEngine.stopRecording((leftChunks, rightChunks) => {
+        const blob = encodeWav(leftChunks, rightChunks, 44100);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mod-synth-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.wav`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    } else {
+      // Start recording
+      setRecording(true);
+      audioEngine.startRecording();
+      const startTime = Date.now();
+      timerRef.current = setInterval(() => {
+        setRecordingElapsed(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    }
+  }, [isRecording, setRecording, setRecordingElapsed]);
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const formatRecordingTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   // MIDI connection state
   const [midiConnected, setMidiConnected] = React.useState(midiManager.connected);
@@ -301,6 +298,51 @@ export function Toolbar() {
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
+
+      {/* Record button */}
+      {isAudioReady && (
+        <button
+          style={{
+            ...iconBtnStyle,
+            gap: 4,
+            color: isRecording ? '#FF4444' : theme.textMuted,
+            borderColor: isRecording ? '#FF4444' : theme.borderSubtle,
+          }}
+          onClick={handleToggleRecording}
+          title={isRecording ? 'Stop recording' : 'Record to WAV'}
+        >
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: isRecording ? '#FF4444' : theme.textMuted,
+              flexShrink: 0,
+              animation: isRecording ? 'pulse-recording 1.5s ease-in-out infinite' : 'none',
+            }}
+          />
+          {isRecording && (
+            <span style={{ fontSize: 9, fontFamily: theme.fontMono }}>
+              {formatRecordingTime(recordingElapsed)}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* VU Meters toggle */}
+      {isAudioReady && (
+        <button
+          style={{
+            ...iconBtnStyle,
+            color: showVuMeters ? theme.accent : theme.textMuted,
+            borderColor: showVuMeters ? theme.accent : theme.borderSubtle,
+          }}
+          onClick={toggleVuMeters}
+          title={showVuMeters ? 'Hide cable VU meters' : 'Show cable VU meters'}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>equalizer</span>
+        </button>
+      )}
 
       {/* MIDI indicator */}
       <button

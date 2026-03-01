@@ -33,6 +33,7 @@ import { createArpeggiatorNode } from './nodes/arpeggiator-node.ts';
 import { createGranularNode } from './nodes/granular-node.ts';
 import { createLooperNode } from './nodes/looper-node.ts';
 import { midiManager } from './midi-manager.ts';
+import { cableMonitor } from './cable-monitor.ts';
 
 export class AudioEngine {
   private nodes = new Map<string, AudioWorkletNode>();
@@ -53,6 +54,8 @@ export class AudioEngine {
 
   async shutdown(): Promise<void> {
     if (!this.initialized) return;
+    // Clear cable monitor taps
+    cableMonitor.clearAll();
     // Disconnect and remove all nodes
     for (const [id, node] of this.nodes) {
       this.connectionManager.disconnectAllForModule(id);
@@ -213,6 +216,31 @@ export class AudioEngine {
     const node = this.nodes.get(keyboardModuleId);
     if (node) {
       node.port.postMessage({ type: 'noteOff', note: midiNote });
+    }
+  }
+
+  /** Start recording on all Output module nodes */
+  startRecording(): void {
+    for (const [, node] of this.nodes) {
+      if ((node as any).__moduleType === 'output') {
+        node.port.postMessage({ type: 'startRecording' });
+      }
+    }
+  }
+
+  /** Stop recording and return data via callback on the Output node's port */
+  stopRecording(onData: (leftChunks: Float32Array[], rightChunks: Float32Array[]) => void): void {
+    for (const [, node] of this.nodes) {
+      if ((node as any).__moduleType === 'output') {
+        const handler = (e: MessageEvent) => {
+          if (e.data.type === 'recordingData') {
+            node.port.removeEventListener('message', handler);
+            onData(e.data.leftChunks, e.data.rightChunks);
+          }
+        };
+        node.port.addEventListener('message', handler);
+        node.port.postMessage({ type: 'stopRecording' });
+      }
     }
   }
 }

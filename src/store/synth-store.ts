@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ModuleType, ModuleInstance, CableConnection, PortRef, SignalType } from '../types/index.ts';
 import { audioEngine } from '../audio/engine.ts';
 import { getModuleDefinition } from '../audio/graph/port-registry.ts';
+import { useHistoryStore, type HistorySnapshot } from './history-store.ts';
 import type { Preset } from '../presets/types.ts';
 import { setActivePresetId } from '../presets/preset-storage.ts';
 
@@ -16,6 +17,92 @@ function generateModuleId(): string {
 
 function generateConnectionId(): string {
   return `conn_${nextConnectionId++}`;
+}
+
+/** Take a snapshot of current state for undo history */
+function takeSnapshot(state: { modules: Record<string, ModuleInstance>; connections: Record<string, CableConnection> }): HistorySnapshot {
+  return {
+    modules: JSON.parse(JSON.stringify(state.modules)),
+    connections: JSON.parse(JSON.stringify(state.connections)),
+  };
+}
+
+/** Push a snapshot before a mutating action (skipped during drag gestures) */
+function pushSnapshotIfNeeded(state: { modules: Record<string, ModuleInstance>; connections: Record<string, CableConnection> }): void {
+  if (useHistoryStore.getState().isDragging) return;
+  useHistoryStore.getState().pushSnapshot(takeSnapshot(state));
+}
+
+/** Reconcile audio engine to match a restored snapshot */
+function restoreAudioState(
+  current: { modules: Record<string, ModuleInstance>; connections: Record<string, CableConnection>; isAudioReady: boolean },
+  target: HistorySnapshot,
+): void {
+  if (!current.isAudioReady) return;
+
+  const currentModuleIds = new Set(Object.keys(current.modules));
+  const targetModuleIds = new Set(Object.keys(target.modules));
+  const currentConnIds = new Set(Object.keys(current.connections));
+  const targetConnIds = new Set(Object.keys(target.connections));
+
+  // 1. Remove connections that no longer exist
+  for (const connId of currentConnIds) {
+    if (!targetConnIds.has(connId)) {
+      try { audioEngine.disconnect(connId); } catch {}
+    }
+  }
+
+  // 2. Remove modules that no longer exist
+  for (const modId of currentModuleIds) {
+    if (!targetModuleIds.has(modId)) {
+      try { audioEngine.destroyModule(modId); } catch {}
+    }
+  }
+
+  // 3. Add modules that are new
+  for (const modId of targetModuleIds) {
+    if (!currentModuleIds.has(modId)) {
+      const mod = target.modules[modId];
+      audioEngine.createModule(modId, mod.type, mod.params);
+    }
+  }
+
+  // 4. Update params for modules that exist in both
+  for (const modId of targetModuleIds) {
+    if (currentModuleIds.has(modId)) {
+      const targetMod = target.modules[modId];
+      const currentMod = current.modules[modId];
+      for (const [key, value] of Object.entries(targetMod.params)) {
+        if (currentMod.params[key] !== value) {
+          audioEngine.setParam(modId, key, value);
+        }
+      }
+    }
+  }
+
+  // 5. Add connections that are new
+  for (const connId of targetConnIds) {
+    if (!currentConnIds.has(connId)) {
+      const conn = target.connections[connId];
+      try { audioEngine.connect(connId, conn.source, conn.dest); } catch {}
+    }
+  }
+}
+
+/** Reset ID counters to prevent collisions after undo/redo */
+function resetIdCounters(snapshot: HistorySnapshot): void {
+  let maxModId = 0;
+  let maxConnId = 0;
+  for (const id of Object.keys(snapshot.modules)) {
+    const n = parseInt(id.replace('mod_', ''), 10);
+    if (n > maxModId) maxModId = n;
+  }
+  for (const id of Object.keys(snapshot.connections)) {
+    const n = parseInt(id.replace('conn_', ''), 10);
+    if (n > maxConnId) maxConnId = n;
+  }
+  nextModuleId = maxModId + 1;
+  nextConnectionId = maxConnId + 1;
 }
 
 interface PendingCable {
@@ -44,6 +131,9 @@ interface SynthStore {
   completeCable: (dest: PortRef) => string | null;
   setupDefaultPatch: () => void;
   loadPreset: (preset: Preset) => Promise<void>;
+  duplicateModule: (id: string) => string | null;
+  undo: () => void;
+  redo: () => void;
   noteOn: (midiNote: number) => void;
   noteOff: (midiNote: number) => void;
 }
@@ -81,6 +171,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   addModule: (type: ModuleType): string => {
+    pushSnapshotIfNeeded(get());
     const id = generateModuleId();
     const def = getModuleDefinition(type);
     const instance: ModuleInstance = {
@@ -105,6 +196,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   addModuleAt: (type: ModuleType, x: number, y: number): string => {
+    pushSnapshotIfNeeded(get());
     const id = generateModuleId();
     const def = getModuleDefinition(type);
     const instance: ModuleInstance = {
@@ -127,6 +219,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   removeModule: (id: string) => {
+    pushSnapshotIfNeeded(get());
     // Remove connections for this module
     const state = get();
     const removedConnectionIds = audioEngine.destroyModule(id);
@@ -153,6 +246,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   moveModule: (id: string, pos: { x: number; y: number }) => {
+    pushSnapshotIfNeeded(get());
     set((state) => ({
       modules: {
         ...state.modules,
@@ -162,6 +256,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   updateParam: (moduleId: string, paramName: string, value: number) => {
+    pushSnapshotIfNeeded(get());
     set((state) => ({
       modules: {
         ...state.modules,
@@ -178,6 +273,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   addConnection: (source: PortRef, dest: PortRef): string => {
+    pushSnapshotIfNeeded(get());
     const id = generateConnectionId();
     // Get signal type from source port
     const state = get();
@@ -200,6 +296,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   },
 
   removeConnection: (id: string) => {
+    pushSnapshotIfNeeded(get());
     if (get().isAudioReady) {
       audioEngine.disconnect(id);
     }
@@ -353,9 +450,65 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       }
     }
 
-    // Track active preset
+    // Track active preset and clear undo history
     set({ activePresetId: preset.id });
     setActivePresetId(preset.id);
+    useHistoryStore.getState().clear();
+  },
+
+  undo: () => {
+    const state = get();
+    if (!state.isAudioReady) return;
+    const currentSnapshot = takeSnapshot(state);
+    const history = useHistoryStore.getState();
+    const previous = history.undo();
+    if (!previous) return;
+    // Push current state to future
+    useHistoryStore.setState((s) => ({
+      future: [...s.future, currentSnapshot],
+    }));
+    // Reconcile audio engine with restored snapshot
+    restoreAudioState(state, previous);
+    set({
+      modules: previous.modules,
+      connections: previous.connections,
+      pendingCable: null,
+    });
+    // Reset ID counters to avoid collisions
+    resetIdCounters(previous);
+  },
+
+  redo: () => {
+    const state = get();
+    if (!state.isAudioReady) return;
+    const currentSnapshot = takeSnapshot(state);
+    const history = useHistoryStore.getState();
+    const next = history.redo();
+    if (!next) return;
+    // Push current state to past
+    useHistoryStore.setState((s) => ({
+      past: [...s.past, currentSnapshot],
+    }));
+    // Reconcile audio engine with restored snapshot
+    restoreAudioState(state, next);
+    set({
+      modules: next.modules,
+      connections: next.connections,
+      pendingCable: null,
+    });
+    resetIdCounters(next);
+  },
+
+  duplicateModule: (id: string): string | null => {
+    const state = get();
+    const source = state.modules[id];
+    if (!source) return null;
+    const newId = get().addModuleAt(source.type, source.x + 30, source.y + 30);
+    // Copy params
+    for (const [key, value] of Object.entries(source.params)) {
+      get().updateParam(newId, key, value);
+    }
+    return newId;
   },
 
   noteOn: (midiNote: number) => {

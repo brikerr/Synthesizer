@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { useTheme } from '../store/theme-store.ts';
+import { useContextMenuStore } from '../store/context-menu-store.ts';
 import type { ModuleType } from '../types/index.ts';
 import { Cables } from './Cables.tsx';
 import { AmbientBackground } from './AmbientBackground.tsx';
-import { HighlightContext } from './ModulePanel.tsx';
+import { HighlightContext, DeferredRemoveContext } from './ModulePanel.tsx';
 
 import VCOPanel from './modules/VCOPanel.tsx';
 import VCFPanel from './modules/VCFPanel.tsx';
@@ -83,15 +84,58 @@ const canvasStyle: React.CSSProperties = {
 
 export function Rack() {
   const modules = useSynthStore((s) => s.modules);
+  const removeModule = useSynthStore((s) => s.removeModule);
+  const isAudioReady = useSynthStore((s) => s.isAudioReady);
   const connections = useSynthStore((s) => s.connections);
   const pendingCable = useSynthStore((s) => s.pendingCable);
   const cancelCable = useSynthStore((s) => s.cancelCable);
+  const openContextMenu = useContextMenuStore((s) => s.open);
   const theme = useTheme();
 
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+
+  // --- Module add/remove animations ---
+  const [enteringIds, setEnteringIds] = useState<Set<string>>(new Set());
+  const [exitingModules, setExitingModules] = useState<Map<string, typeof modules[string]>>(new Map());
+  const prevModuleIdsRef = useRef<Set<string>>(new Set());
+
+  // Detect newly added modules
+  useEffect(() => {
+    const currentIds = new Set(Object.keys(modules));
+    const prevIds = prevModuleIdsRef.current;
+    const newIds = new Set<string>();
+    for (const id of currentIds) {
+      if (!prevIds.has(id)) newIds.add(id);
+    }
+    prevModuleIdsRef.current = currentIds;
+    if (newIds.size > 0) {
+      setEnteringIds(newIds);
+      // Double-rAF: first frame paints initial state, second triggers transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setEnteringIds(new Set());
+        });
+      });
+    }
+  }, [modules]);
+
+  // Deferred remove: animate out, then actually remove
+  const handleDeferredRemove = useCallback((id: string) => {
+    const mod = modules[id];
+    if (!mod) return;
+    setExitingModules((prev) => new Map(prev).set(id, mod));
+    setTimeout(() => {
+      setExitingModules((prev) => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
+      removeModule(id);
+    }, 200);
+  }, [modules, removeModule]);
 
   // BFS: compute highlighted module + connection sets from selected module
   const { highlightedModuleIds, highlightedConnectionIds } = useMemo(() => {
@@ -280,9 +324,24 @@ export function Rack() {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onWheel={handleWheel}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        // Only show "Add Module..." on empty canvas right-click
+        const target = e.target as HTMLElement;
+        const isEmptySpace = target === e.currentTarget || target === innerRef.current;
+        if (isEmptySpace && isAudioReady) {
+          openContextMenu(e.clientX, e.clientY, [
+            {
+              label: 'Add Module...',
+              icon: 'add_circle',
+              action: () => window.dispatchEvent(new CustomEvent('open-module-search')),
+            },
+          ]);
+        }
+      }}
     >
       <AmbientBackground />
+      <DeferredRemoveContext.Provider value={handleDeferredRemove}>
       <HighlightContext.Provider value={highlightContextValue}>
         <div
           ref={innerRef}
@@ -291,13 +350,42 @@ export function Rack() {
             transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
           }}
         >
-          {moduleList.map((mod) => {
+          {moduleList.filter((mod) => !exitingModules.has(mod.id)).map((mod) => {
+            const Panel = PANEL_MAP[mod.type];
+            if (!Panel) return null;
+            const isEntering = enteringIds.has(mod.id);
+            return (
+              <div
+                key={mod.id}
+                style={{
+                  position: 'absolute',
+                  left: mod.x,
+                  top: mod.y,
+                  transform: isEntering ? 'scale(0.85)' : 'scale(1)',
+                  opacity: isEntering ? 0 : 1,
+                  transition: 'transform 0.2s ease-out, opacity 0.2s ease-out',
+                }}
+              >
+                <Panel moduleId={mod.id} />
+              </div>
+            );
+          })}
+          {/* Exiting modules — animating out */}
+          {Array.from(exitingModules.values()).map((mod) => {
             const Panel = PANEL_MAP[mod.type];
             if (!Panel) return null;
             return (
               <div
                 key={mod.id}
-                style={{ position: 'absolute', left: mod.x, top: mod.y }}
+                style={{
+                  position: 'absolute',
+                  left: mod.x,
+                  top: mod.y,
+                  transform: 'scale(0.95)',
+                  opacity: 0,
+                  transition: 'transform 0.2s ease-in, opacity 0.2s ease-in',
+                  pointerEvents: 'none',
+                }}
               >
                 <Panel moduleId={mod.id} />
               </div>
@@ -306,6 +394,7 @@ export function Rack() {
           <Cables containerRef={innerRef} highlightedConnectionIds={highlightedConnectionIds ?? undefined} />
         </div>
       </HighlightContext.Provider>
+      </DeferredRemoveContext.Provider>
 
       {/* Zoom controls */}
       <div style={{

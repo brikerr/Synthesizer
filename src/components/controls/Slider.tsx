@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useAccentColor } from './ModuleAccentContext.tsx';
 import { useTheme } from '../../store/theme-store.ts';
+import { useHistoryStore } from '../../store/history-store.ts';
 
 interface SliderProps {
   label: string;
@@ -65,6 +66,7 @@ const Slider: React.FC<SliderProps> = ({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    useHistoryStore.getState().setDragging(false);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = '';
@@ -74,6 +76,7 @@ const Slider: React.FC<SliderProps> = ({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
+      useHistoryStore.getState().setDragging(true);
       setIsDragging(true);
       onChange(valueFromMouseY(e.clientY));
       document.addEventListener('mousemove', handleMouseMove);

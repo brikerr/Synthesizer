@@ -1,12 +1,37 @@
 // Output (Master) AudioWorkletProcessor
 // Master volume stage — passes audio to destination
+// Supports recording via MessagePort
 // No imports — runs in AudioWorkletGlobalScope
 
 class OutputProcessor extends AudioWorkletProcessor {
+  private recording = false;
+  private leftChunks: Float32Array[] = [];
+  private rightChunks: Float32Array[] = [];
+
   static get parameterDescriptors() {
     return [
       { name: 'masterVolume', defaultValue: 0.5, minValue: 0, maxValue: 1, automationRate: 'a-rate' as const },
     ];
+  }
+
+  constructor(options: AudioWorkletNodeOptions) {
+    super(options);
+    this.port.onmessage = (e) => {
+      if (e.data.type === 'startRecording') {
+        this.recording = true;
+        this.leftChunks = [];
+        this.rightChunks = [];
+      } else if (e.data.type === 'stopRecording') {
+        this.recording = false;
+        this.port.postMessage({
+          type: 'recordingData',
+          leftChunks: this.leftChunks,
+          rightChunks: this.rightChunks,
+        });
+        this.leftChunks = [];
+        this.rightChunks = [];
+      }
+    };
   }
 
   process(
@@ -36,6 +61,12 @@ class OutputProcessor extends AudioWorkletProcessor {
         const sample = rightIn ? rightIn[i] : (leftIn ? leftIn[i] : 0);
         rightOut[i] = sample * vol;
       }
+    }
+
+    // Buffer output for recording
+    if (this.recording && leftOut) {
+      this.leftChunks.push(new Float32Array(leftOut));
+      this.rightChunks.push(rightOut ? new Float32Array(rightOut) : new Float32Array(leftOut));
     }
 
     return true;

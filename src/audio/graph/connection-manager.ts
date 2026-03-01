@@ -1,5 +1,6 @@
 import type { PortRef, SignalType } from '../../types/index.ts';
 import { getModuleDefinition } from './port-registry.ts';
+import { cableMonitor } from '../cable-monitor.ts';
 
 interface ActiveConnection {
   id: string;
@@ -39,6 +40,9 @@ export class ConnectionManager {
 
     sourceNode.connect(destNode, sourcePort.index, destPort.index);
 
+    // Create AnalyserNode tap for signal visualization
+    cableMonitor.tap(id, sourceNode, sourcePort.index);
+
     const conn: ActiveConnection = {
       id,
       source,
@@ -72,6 +76,7 @@ export class ConnectionManager {
       }
     }
 
+    cableMonitor.untap(id);
     this.connections.delete(id);
   }
 

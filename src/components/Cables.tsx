@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSynthStore } from '../store/synth-store.ts';
 import { useTheme } from '../store/theme-store.ts';
+import { useContextMenuStore } from '../store/context-menu-store.ts';
+import { useCableLevelStore } from '../store/cable-level-store.ts';
 import { getSignalColor } from '../styles/theme-tokens.ts';
+import { CableVuMeter } from './CableVuMeter.tsx';
+import { CableMiniScope } from './CableMiniScope.tsx';
 import type { CableConnection, SignalType } from '../types/index.ts';
 
 interface Point {
@@ -56,11 +60,19 @@ interface CableProps {
 
 function Cable({ connection, containerEl, tick: _tick, isHighlighted }: CableProps) {
   const removeConnection = useSynthStore((s) => s.removeConnection);
+  const openContextMenu = useContextMenuStore((s) => s.open);
+  const cableLevel = useCableLevelStore((s) => s.levels[connection.id] ?? 0);
+  const showCableGlow = useCableLevelStore((s) => s.showCableGlow);
+  const showVuMeters = useCableLevelStore((s) => s.showVuMeters);
+  const setHoveredCableId = useCableLevelStore((s) => s.setHoveredCableId);
+  const hoveredCableId = useCableLevelStore((s) => s.hoveredCableId);
   const theme = useTheme();
   const pathRef = useRef<SVGPathElement>(null);
   const tex1Ref = useRef<SVGPathElement>(null);
   const tex2Ref = useRef<SVGPathElement>(null);
   const rafRef = useRef(0);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const isHovered = hoveredCableId === connection.id;
 
   const springRef = useRef({
     offset: 0,
@@ -154,7 +166,39 @@ function Cable({ connection, containerEl, tick: _tick, isHighlighted }: CablePro
         e.stopPropagation();
         removeConnection(connection.id);
       }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu(e.clientX, e.clientY, [
+          {
+            label: 'Delete Cable',
+            icon: 'link_off',
+            danger: true,
+            action: () => removeConnection(connection.id),
+          },
+        ]);
+      }}
+      onMouseEnter={() => setHoveredCableId(connection.id)}
+      onMouseLeave={() => {
+        setHoveredCableId(null);
+        setMousePos(null);
+      }}
+      onMouseMove={(e) => {
+        if (isHovered) setMousePos({ x: e.clientX, y: e.clientY });
+      }}
     >
+      {/* Cable glow — intensity proportional to signal level */}
+      {showCableGlow && cableLevel > 0.01 && isHighlighted !== false && (
+        <path
+          d={d}
+          stroke={color}
+          strokeWidth={theme.cableWidth + 6 + cableLevel * 8}
+          fill="none"
+          opacity={Math.min(0.35, cableLevel * 0.5)}
+          strokeLinecap="round"
+          style={{ pointerEvents: 'none', filter: `blur(${4 + cableLevel * 4}px)` }}
+        />
+      )}
       {/* Base cable */}
       <path
         ref={pathRef}
@@ -191,6 +235,18 @@ function Cable({ connection, containerEl, tick: _tick, isHighlighted }: CablePro
             style={{ pointerEvents: 'none' }}
           />
         </>
+      )}
+      {/* VU Meter */}
+      {showVuMeters && isHighlighted !== false && (
+        <CableVuMeter start={src} end={dst} level={cableLevel} />
+      )}
+      {/* Mini-scope on hover */}
+      {isHovered && mousePos && (
+        <CableMiniScope
+          mouseX={mousePos.x}
+          mouseY={mousePos.y}
+          signalType={connection.signalType}
+        />
       )}
     </g>
   );

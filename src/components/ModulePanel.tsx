@@ -3,7 +3,9 @@ import { useSynthStore } from '../store/synth-store.ts';
 import { getModuleDefinition } from '../audio/graph/port-registry.ts';
 import { getModuleColor } from '../styles/module-colors.ts';
 import { useTheme } from '../store/theme-store.ts';
+import { useHistoryStore } from '../store/history-store.ts';
 import { ModuleAccentContext } from './controls/ModuleAccentContext.tsx';
+import { useContextMenuStore } from '../store/context-menu-store.ts';
 import Port from './controls/Port.tsx';
 import Tooltip from './hints/Tooltip.tsx';
 import type { PortDefinition } from '../types/index.ts';
@@ -18,6 +20,9 @@ export const HighlightContext = createContext<HighlightContextValue>({
   onSelectModule: () => {},
 });
 
+// Context for deferred module removal (animated delete) — provided by Rack
+export const DeferredRemoveContext = createContext<((id: string) => void) | null>(null);
+
 interface ModulePanelProps {
   moduleId: string;
   children: React.ReactNode;
@@ -28,6 +33,9 @@ interface ModulePanelProps {
 const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlighted: isHighlightedProp, onSelect: onSelectProp }) => {
   const module = useSynthStore((s) => s.modules[moduleId]);
   const { highlightedModuleIds, onSelectModule } = useContext(HighlightContext);
+  const deferredRemove = useContext(DeferredRemoveContext);
+  const openContextMenu = useContextMenuStore((s) => s.open);
+  const duplicateModule = useSynthStore((s) => s.duplicateModule);
 
   // Derive highlight state: props override context
   const isHighlighted = isHighlightedProp !== undefined
@@ -65,6 +73,7 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlig
   const handleMouseUp = useCallback(() => {
     dragRef.current = null;
     setIsDragging(false);
+    useHistoryStore.getState().setDragging(false);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = '';
@@ -74,6 +83,7 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlig
   const handleHeaderMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
+      useHistoryStore.getState().setDragging(true);
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -90,8 +100,33 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlig
   );
 
   const handleDelete = useCallback(() => {
-    removeModule(moduleId);
-  }, [moduleId, removeModule]);
+    if (deferredRemove) {
+      deferredRemove(moduleId);
+    } else {
+      removeModule(moduleId);
+    }
+  }, [moduleId, removeModule, deferredRemove]);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openContextMenu(e.clientX, e.clientY, [
+        {
+          label: 'Duplicate',
+          icon: 'content_copy',
+          action: () => duplicateModule(moduleId),
+        },
+        {
+          label: 'Delete',
+          icon: 'delete',
+          danger: true,
+          action: handleDelete,
+        },
+      ]);
+    },
+    [moduleId, openContextMenu, duplicateModule, handleDelete],
+  );
 
   const handlePortClick = useCallback(
     (_moduleId: string, portId: string, direction: 'input' | 'output', signal: PortDefinition['signal'], _element: HTMLDivElement) => {
@@ -114,6 +149,7 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ moduleId, children, isHighlig
   return (
     <ModuleAccentContext.Provider value={colors}>
       <div
+        onContextMenu={handleContextMenu}
         onClick={(e) => {
           if (!isDragging && onSelect) {
             e.stopPropagation();
