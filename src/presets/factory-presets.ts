@@ -786,4 +786,282 @@ export const factoryPresets: Preset[] = [
       { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in_left' },
     ],
   },
+
+  // ───────────────────────────────────────────────────
+  // 18. Lo-Fi Crush — bitcrushed synth with LFO-modulated rate
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_lofi_crush',
+    name: 'Lo-Fi Crush',
+    description: 'Bitcrushed saw synth with retro digital grit',
+    category: 'lead',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 120, params: { octave: 0 } },
+      { id: 'm2', type: 'vco', x: 300, y: 40, params: { frequency: 0, waveform: 1 } },
+      { id: 'm3', type: 'envelope', x: 300, y: 240, params: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.3 } },
+      { id: 'm4', type: 'vca', x: 540, y: 40, params: { gain: 0.8 } },
+      { id: 'm5', type: 'bitcrusher', x: 780, y: 40, params: { sampleRateReduction: 8, bitDepth: 8, mix: 0.7 } },
+      { id: 'm6', type: 'vcf', x: 1020, y: 40, params: { cutoff: 0.55, cutoffModDepth: 0.3, resonance: 0.2, mode: 0 } },
+      { id: 'm7', type: 'delay', x: 1260, y: 40, params: { time: 0.25, feedback: 0.3, mix: 0.25 } },
+      { id: 'm8', type: 'output', x: 1500, y: 40, params: { masterVolume: 0.45 } },
+    ],
+    connections: [
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm3', destPortId: 'gate_in' },
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm4', destPortId: 'audio_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'envelope_out', destModuleId: 'm4', destPortId: 'cv_in' },
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm5', destPortId: 'audio_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'envelope_out', destModuleId: 'm6', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 19. Dirty Lead — distorted square lead with drive CV
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_dirty_lead',
+    name: 'Dirty Lead',
+    description: 'Overdriven square wave lead with tape saturation',
+    category: 'lead',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 120, params: { octave: 0 } },
+      { id: 'm2', type: 'vco', x: 300, y: 40, params: { frequency: 0, waveform: 2 } },
+      { id: 'm3', type: 'envelope', x: 300, y: 240, params: { attack: 0.01, decay: 0.15, sustain: 0.7, release: 0.2 } },
+      { id: 'm4', type: 'vca', x: 540, y: 40, params: { gain: 0.8 } },
+      { id: 'm5', type: 'distortion', x: 780, y: 40, params: { algorithm: 3, drive: 6, tone: 0.6, mix: 0.85, driveModDepth: 0.3 } },
+      { id: 'm6', type: 'lfo', x: 540, y: 300, params: { rate: 3, depth: 0.4, waveform: 0 } },
+      { id: 'm7', type: 'vcf', x: 1020, y: 40, params: { cutoff: 0.65, cutoffModDepth: 0.4, resonance: 0.3, mode: 0 } },
+      { id: 'm8', type: 'reverb', x: 1260, y: 40, params: { decay: 1.5, damping: 0.6, mix: 0.2 } },
+      { id: 'm9', type: 'output', x: 1500, y: 40, params: { masterVolume: 0.4 } },
+    ],
+    connections: [
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm3', destPortId: 'gate_in' },
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm4', destPortId: 'audio_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'envelope_out', destModuleId: 'm4', destPortId: 'cv_in' },
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm5', destPortId: 'audio_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'drive_cv' },
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'envelope_out', destModuleId: 'm7', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 20. Drum Machine — 3 drum synths with clock divider pattern
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_drum_machine',
+    name: 'Drum Machine',
+    description: 'Kick, snare, hihat with clock-divided rhythm',
+    category: 'percussion',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'lfo', x: 40, y: 200, params: { rate: 6, depth: 1.0, waveform: 3 } },
+      { id: 'm2', type: 'clockDivider', x: 280, y: 200, params: { gateLength: 0.4 } },
+      { id: 'm3', type: 'drumSynth', x: 560, y: 40, params: { voice: 0, pitch: 55, decay: 0.4, pitchDecay: 0.06, pitchAmount: 3, noiseLevel: 0.15, tone: 0.4, level: 0.9 } },
+      { id: 'm4', type: 'drumSynth', x: 560, y: 280, params: { voice: 1, pitch: 180, decay: 0.15, pitchDecay: 0.02, pitchAmount: 1, noiseLevel: 0.6, tone: 0.5, level: 0.7 } },
+      { id: 'm5', type: 'drumSynth', x: 560, y: 480, params: { voice: 2, pitch: 300, decay: 0.06, pitchDecay: 0.01, pitchAmount: 0.5, noiseLevel: 0.9, tone: 0.7, level: 0.5 } },
+      { id: 'm6', type: 'mixer', x: 840, y: 200, params: { gain1: 1.0, gain2: 0.8, gain3: 0.6, masterGain: 1.0 } },
+      { id: 'm7', type: 'distortion', x: 1080, y: 200, params: { algorithm: 0, drive: 2, tone: 0.55, mix: 0.3 } },
+      { id: 'm8', type: 'output', x: 1320, y: 200, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // LFO → Clock Divider
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'clock_in' },
+      // /2 → Kick (every other beat)
+      { sourceModuleId: 'm2', sourcePortId: 'div2_out', destModuleId: 'm3', destPortId: 'gate_in' },
+      // /4 → Snare (every 4th beat — backbeat)
+      { sourceModuleId: 'm2', sourcePortId: 'div4_out', destModuleId: 'm4', destPortId: 'gate_in' },
+      // Raw clock → Hihat (every beat)
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'gate_in' },
+      // Drums → Mixer
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'input_1' },
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'input_2' },
+      { sourceModuleId: 'm5', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'input_3' },
+      // Mixer → subtle Distortion → Output
+      { sourceModuleId: 'm6', sourcePortId: 'mix_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 21. Glide Sequence — slew-limited sequencer with portamento
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_glide_sequence',
+    name: 'Glide Sequence',
+    description: 'Smooth portamento sequence with slew limiter',
+    category: 'sequencer',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'lfo', x: 40, y: 120, params: { rate: 3, depth: 1.0, waveform: 3 } },
+      { id: 'm2', type: 'stepSequencer', x: 280, y: 120, params: { step0: 0, step1: 0.3, step2: 0.5, step3: 0.2, step4: 0.7, step5: 0.4, step6: 0.1, step7: 0.6, gateLength: 0.7, steps: 8 } },
+      { id: 'm3', type: 'slewLimiter', x: 520, y: 40, params: { rise: 0.08, fall: 0.08, shape: 0.7 } },
+      { id: 'm4', type: 'vco', x: 760, y: 40, params: { frequency: 0, waveform: 1 } },
+      { id: 'm5', type: 'envelope', x: 520, y: 280, params: { attack: 0.02, decay: 0.2, sustain: 0.5, release: 0.15 } },
+      { id: 'm6', type: 'vcf', x: 1000, y: 40, params: { cutoff: 0.45, cutoffModDepth: 0.5, resonance: 0.35, mode: 0 } },
+      { id: 'm7', type: 'vca', x: 1240, y: 40, params: { gain: 0.8 } },
+      { id: 'm8', type: 'delay', x: 1480, y: 40, params: { time: 0.375, feedback: 0.35, mix: 0.3 } },
+      { id: 'm9', type: 'output', x: 1720, y: 40, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      // LFO → Sequencer clock
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'clock_in' },
+      // Sequencer CV → Slew Limiter → VCO (smooth glide)
+      { sourceModuleId: 'm2', sourcePortId: 'cv_out', destModuleId: 'm3', destPortId: 'cv_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'cv_out', destModuleId: 'm4', destPortId: 'pitch_cv' },
+      // Sequencer gate → Envelope
+      { sourceModuleId: 'm2', sourcePortId: 'gate_out', destModuleId: 'm5', destPortId: 'gate_in' },
+      // VCO → VCF
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      // Envelope → VCF cutoff + VCA
+      { sourceModuleId: 'm5', sourcePortId: 'envelope_out', destModuleId: 'm6', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm5', sourcePortId: 'envelope_out', destModuleId: 'm7', destPortId: 'cv_in' },
+      // VCF → VCA → Delay → Output
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 22. Auto-Wah — envelope follower controlling filter cutoff
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_auto_wah',
+    name: 'Auto-Wah',
+    description: 'Envelope follower drives filter for dynamic wah',
+    category: 'fx',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 120, params: { octave: 0 } },
+      { id: 'm2', type: 'vco', x: 300, y: 40, params: { frequency: 0, waveform: 1 } },
+      { id: 'm3', type: 'envelope', x: 300, y: 280, params: { attack: 0.005, decay: 0.2, sustain: 0.7, release: 0.3 } },
+      { id: 'm4', type: 'vca', x: 540, y: 40, params: { gain: 0.9 } },
+      { id: 'm5', type: 'envelopeFollower', x: 540, y: 280, params: { attack: 0.005, release: 0.08, gain: 3, sensitivity: 0.7 } },
+      { id: 'm6', type: 'vcf', x: 800, y: 40, params: { cutoff: 0.2, cutoffModDepth: 0.8, resonance: 0.5, mode: 0 } },
+      { id: 'm7', type: 'delay', x: 1060, y: 40, params: { time: 0.2, feedback: 0.25, mix: 0.2 } },
+      { id: 'm8', type: 'output', x: 1300, y: 40, params: { masterVolume: 0.5 } },
+    ],
+    connections: [
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm2', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm3', destPortId: 'gate_in' },
+      { sourceModuleId: 'm2', sourcePortId: 'audio_out', destModuleId: 'm4', destPortId: 'audio_in' },
+      { sourceModuleId: 'm3', sourcePortId: 'envelope_out', destModuleId: 'm4', destPortId: 'cv_in' },
+      // VCA audio → Envelope Follower (detect amplitude)
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm5', destPortId: 'audio_in' },
+      // VCA audio → VCF input
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm6', destPortId: 'audio_in' },
+      // Envelope Follower CV → VCF cutoff (auto-wah)
+      { sourceModuleId: 'm5', sourcePortId: 'cv_out', destModuleId: 'm6', destPortId: 'cutoff_cv' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm7', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 23. CV Playground — CV mixer blending multiple modulation sources
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_cv_playground',
+    name: 'CV Playground',
+    description: 'CV mixer blends 3 LFOs for complex modulation',
+    category: 'utility',
+    isFactory: true,
+    version: 1,
+    modules: [
+      { id: 'm1', type: 'keyboard', x: 40, y: 200, params: { octave: 0 } },
+      { id: 'm2', type: 'lfo', x: 40, y: 420, params: { rate: 0.5, depth: 0.6, waveform: 0 } },
+      { id: 'm3', type: 'lfo', x: 280, y: 420, params: { rate: 2.1, depth: 0.3, waveform: 1 } },
+      { id: 'm4', type: 'lfo', x: 520, y: 420, params: { rate: 7, depth: 0.2, waveform: 3 } },
+      { id: 'm5', type: 'cvMixer', x: 760, y: 420, params: { gain1: 0.5, gain2: 0.3, gain3: -0.2, offset: 0 } },
+      { id: 'm6', type: 'vco', x: 300, y: 40, params: { frequency: 0, waveform: 1 } },
+      { id: 'm7', type: 'envelope', x: 300, y: 200, params: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.4 } },
+      { id: 'm8', type: 'vcf', x: 560, y: 40, params: { cutoff: 0.4, cutoffModDepth: 0.6, resonance: 0.4, mode: 0 } },
+      { id: 'm9', type: 'vca', x: 800, y: 40, params: { gain: 0.8 } },
+      { id: 'm10', type: 'reverb', x: 1040, y: 40, params: { decay: 2.0, damping: 0.5, mix: 0.3 } },
+      { id: 'm11', type: 'output', x: 1280, y: 40, params: { masterVolume: 0.45 } },
+    ],
+    connections: [
+      { sourceModuleId: 'm1', sourcePortId: 'pitch_cv_1', destModuleId: 'm6', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm1', sourcePortId: 'gate_1', destModuleId: 'm7', destPortId: 'gate_in' },
+      // 3 LFOs → CV Mixer
+      { sourceModuleId: 'm2', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'cv_in_1' },
+      { sourceModuleId: 'm3', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'cv_in_2' },
+      { sourceModuleId: 'm4', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'cv_in_3' },
+      // Mixed CV → VCF cutoff
+      { sourceModuleId: 'm5', sourcePortId: 'cv_out', destModuleId: 'm8', destPortId: 'cutoff_cv' },
+      // VCO → VCF → VCA → Reverb → Output
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'envelope_out', destModuleId: 'm9', destPortId: 'cv_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in' },
+      { sourceModuleId: 'm9', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'audio_in' },
+      { sourceModuleId: 'm10', sourcePortId: 'audio_out', destModuleId: 'm11', destPortId: 'audio_in_left' },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────
+  // 24. Drums & Bass — drum synth + sequenced bass with distortion
+  // ───────────────────────────────────────────────────
+  {
+    id: 'factory_drums_and_bass',
+    name: 'Drums & Bass',
+    description: 'Drum machine with sequenced distorted bass line',
+    category: 'sequencer',
+    isFactory: true,
+    version: 1,
+    modules: [
+      // Clock source
+      { id: 'm1', type: 'lfo', x: 40, y: 240, params: { rate: 5, depth: 1.0, waveform: 3 } },
+      // Clock divider for drums
+      { id: 'm2', type: 'clockDivider', x: 280, y: 240, params: { gateLength: 0.4 } },
+      // Kick drum on /4
+      { id: 'm3', type: 'drumSynth', x: 520, y: 40, params: { voice: 0, pitch: 50, decay: 0.35, pitchDecay: 0.05, pitchAmount: 3.5, noiseLevel: 0.1, tone: 0.35, level: 0.9 } },
+      // Hihat on every beat
+      { id: 'm4', type: 'drumSynth', x: 520, y: 240, params: { voice: 2, pitch: 350, decay: 0.04, pitchDecay: 0.005, pitchAmount: 0.3, noiseLevel: 0.95, tone: 0.8, level: 0.35 } },
+      // Bass sequencer
+      { id: 'm5', type: 'stepSequencer', x: 280, y: 480, params: { step0: 0, step1: 0, step2: 0.3, step3: 0.3, step4: 0.5, step5: 0.5, step6: 0.2, step7: 0.7, gateLength: 0.6, steps: 8 } },
+      { id: 'm6', type: 'vco', x: 520, y: 480, params: { frequency: -1, waveform: 1 } },
+      { id: 'm7', type: 'envelope', x: 760, y: 480, params: { attack: 0.005, decay: 0.15, sustain: 0.4, release: 0.08 } },
+      { id: 'm8', type: 'vca', x: 1000, y: 480, params: { gain: 0.8 } },
+      { id: 'm9', type: 'distortion', x: 1240, y: 480, params: { algorithm: 0, drive: 3.5, tone: 0.4, mix: 0.5 } },
+      // Drum mixer
+      { id: 'm10', type: 'mixer', x: 800, y: 120, params: { gain1: 1.0, gain2: 0.5, gain3: 0.7, masterGain: 1.0 } },
+      { id: 'm11', type: 'output', x: 1480, y: 240, params: { masterVolume: 0.45 } },
+    ],
+    connections: [
+      // Clock → divider
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm2', destPortId: 'clock_in' },
+      // /4 → kick
+      { sourceModuleId: 'm2', sourcePortId: 'div4_out', destModuleId: 'm3', destPortId: 'gate_in' },
+      // Raw clock → hihat
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm4', destPortId: 'gate_in' },
+      // Drums → mixer channels 1+2
+      { sourceModuleId: 'm3', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'input_1' },
+      { sourceModuleId: 'm4', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'input_2' },
+      // Bass: clock → sequencer
+      { sourceModuleId: 'm1', sourcePortId: 'lfo_out', destModuleId: 'm5', destPortId: 'clock_in' },
+      { sourceModuleId: 'm5', sourcePortId: 'cv_out', destModuleId: 'm6', destPortId: 'pitch_cv' },
+      { sourceModuleId: 'm5', sourcePortId: 'gate_out', destModuleId: 'm7', destPortId: 'gate_in' },
+      { sourceModuleId: 'm6', sourcePortId: 'audio_out', destModuleId: 'm8', destPortId: 'audio_in' },
+      { sourceModuleId: 'm7', sourcePortId: 'envelope_out', destModuleId: 'm8', destPortId: 'cv_in' },
+      { sourceModuleId: 'm8', sourcePortId: 'audio_out', destModuleId: 'm9', destPortId: 'audio_in' },
+      // Bass → mixer channel 3
+      { sourceModuleId: 'm9', sourcePortId: 'audio_out', destModuleId: 'm10', destPortId: 'input_3' },
+      // Mixer → output
+      { sourceModuleId: 'm10', sourcePortId: 'mix_out', destModuleId: 'm11', destPortId: 'audio_in_left' },
+    ],
+  },
 ];
