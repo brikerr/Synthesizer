@@ -32,6 +32,13 @@ import { createWavetableNode } from './nodes/wavetable-node.ts';
 import { createArpeggiatorNode } from './nodes/arpeggiator-node.ts';
 import { createGranularNode } from './nodes/granular-node.ts';
 import { createLooperNode } from './nodes/looper-node.ts';
+import { createBitcrusherNode } from './nodes/bitcrusher-node.ts';
+import { createCvMixerNode } from './nodes/cv-mixer-node.ts';
+import { createSlewLimiterNode } from './nodes/slew-limiter-node.ts';
+import { createDistortionNode } from './nodes/distortion-node.ts';
+import { createEnvelopeFollowerNode } from './nodes/envelope-follower-node.ts';
+import { createClockDividerNode } from './nodes/clock-divider-node.ts';
+import { createDrumSynthNode } from './nodes/drum-synth-node.ts';
 import { midiManager } from './midi-manager.ts';
 import { cableMonitor } from './cable-monitor.ts';
 
@@ -164,6 +171,27 @@ export class AudioEngine {
         break;
       case 'looper':
         node = createLooperNode(ctx, params);
+        break;
+      case 'bitcrusher':
+        node = createBitcrusherNode(ctx, params);
+        break;
+      case 'cvMixer':
+        node = createCvMixerNode(ctx, params);
+        break;
+      case 'slewLimiter':
+        node = createSlewLimiterNode(ctx, params);
+        break;
+      case 'distortion':
+        node = createDistortionNode(ctx, params);
+        break;
+      case 'envelopeFollower':
+        node = createEnvelopeFollowerNode(ctx, params);
+        break;
+      case 'clockDivider':
+        node = createClockDividerNode(ctx, params);
+        break;
+      case 'drumSynth':
+        node = createDrumSynthNode(ctx, params);
         break;
       default:
         throw new Error(`Unknown module type: ${type}`);

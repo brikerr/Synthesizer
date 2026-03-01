@@ -529,6 +529,141 @@ const moduleDefinitions: Record<ModuleType, ModuleDefinition> = {
       { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Looped audio output', suggestedTargets: ['Mixer', 'Output', 'Reverb'] },
     ],
   },
+  bitcrusher: {
+    type: 'bitcrusher',
+    label: 'Bitcrusher',
+    description: 'Lo-fi effect — reduces sample rate and bit depth',
+    detailedDescription:
+      'Reduces audio fidelity by lowering the sample rate and bit depth. Rate reduction creates aliasing artifacts; bit depth reduction adds quantization noise. Classic lo-fi, retro gaming, and industrial sounds.',
+    firstAddTip: 'Bitcrusher adds lo-fi grit. Connect audio to its input and lower the Bits and Rate to hear the effect!',
+    defaultParams: {
+      sampleRateReduction: 1,
+      bitDepth: 16,
+      mix: 1,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to crush', suggestedSources: ['VCO', 'VCA', 'Mixer'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Bitcrushed audio output', suggestedTargets: ['VCF', 'Mixer', 'Output'] },
+    ],
+  },
+  cvMixer: {
+    type: 'cvMixer',
+    label: 'CV Mixer',
+    description: 'CV utility — mix, attenuvert, and offset CV signals',
+    detailedDescription:
+      'Combines up to 3 CV inputs with individual attenuverter controls (bipolar gain from -2 to +2) and adds a DC offset. Essential for scaling, inverting, and combining modulation sources.',
+    firstAddTip: 'CV Mixer combines and scales CV signals. Connect LFOs or envelopes to its inputs and adjust gains to blend modulation!',
+    defaultParams: {
+      gain1: 1,
+      gain2: 1,
+      gain3: 1,
+      offset: 0,
+    },
+    ports: [
+      { id: 'cv_in_1', name: 'CV In 1', direction: 'input', signal: 'cv', index: 0, description: 'CV input 1 — scaled by Gain 1', suggestedSources: ['LFO', 'Envelope', 'Macro Knobs'] },
+      { id: 'cv_in_2', name: 'CV In 2', direction: 'input', signal: 'cv', index: 1, description: 'CV input 2 — scaled by Gain 2', suggestedSources: ['LFO', 'Envelope', 'S&H'] },
+      { id: 'cv_in_3', name: 'CV In 3', direction: 'input', signal: 'cv', index: 2, description: 'CV input 3 — scaled by Gain 3', suggestedSources: ['LFO', 'Envelope'] },
+      { id: 'cv_out', name: 'CV Out', direction: 'output', signal: 'cv', index: 0, description: 'Mixed and offset CV output', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+    ],
+  },
+  slewLimiter: {
+    type: 'slewLimiter',
+    label: 'Slew Limiter',
+    description: 'Smooths CV transitions — portamento and lag processor',
+    detailedDescription:
+      'Limits how fast a signal can rise or fall, with independent rise and fall times. Use it for portamento (pitch glide), smoothing stepped sequences, or creating attack/release shapes from gates. Shape blends between linear and exponential response.',
+    firstAddTip: 'Slew Limiter smooths CV changes. Place it between a Keyboard and VCO for portamento, or after a Sequencer for glide!',
+    defaultParams: {
+      rise: 0.01,
+      fall: 0.01,
+      shape: 0,
+    },
+    ports: [
+      { id: 'cv_in', name: 'CV In', direction: 'input', signal: 'cv', index: 0, description: 'CV signal to slew/smooth', suggestedSources: ['Keyboard', 'Sequencer', 'S&H'] },
+      { id: 'cv_out', name: 'CV Out', direction: 'output', signal: 'cv', index: 0, description: 'Slew-limited CV output', suggestedTargets: ['VCO', 'VCF', 'VCA'] },
+    ],
+  },
+  distortion: {
+    type: 'distortion',
+    label: 'Distortion',
+    description: 'Drive and saturation — 4 distortion algorithms',
+    detailedDescription:
+      'Adds harmonic saturation and clipping to audio. Choose from soft clip (tanh), hard clip, foldback distortion, or tape saturation. Drive controls input gain, tone shapes the output brightness, and mix blends dry/wet.',
+    firstAddTip: 'Distortion adds grit and harmonics. Connect audio to its input, turn up Drive, and try different algorithms!',
+    defaultParams: {
+      algorithm: 0,
+      drive: 1,
+      tone: 0.5,
+      mix: 1,
+      driveModDepth: 0,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to distort', suggestedSources: ['VCO', 'VCA', 'Mixer'] },
+      { id: 'drive_cv', name: 'Drive CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate drive amount via CV', suggestedSources: ['LFO', 'Envelope'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Distorted audio output', suggestedTargets: ['VCF', 'Mixer', 'Output'] },
+    ],
+  },
+  envelopeFollower: {
+    type: 'envelopeFollower',
+    label: 'Env Follower',
+    description: 'Extracts amplitude envelope from audio as CV',
+    detailedDescription:
+      'Tracks the amplitude of an audio signal and outputs a CV envelope that follows its dynamics. Use it to make one sound control another — e.g., a drum pattern controlling filter cutoff. Attack and release control tracking speed.',
+    firstAddTip: 'Env Follower converts audio dynamics to CV. Connect audio to its input, then send its CV output to a VCF cutoff or VCA!',
+    defaultParams: {
+      attack: 0.01,
+      release: 0.1,
+      gain: 1,
+      sensitivity: 0.5,
+    },
+    ports: [
+      { id: 'audio_in', name: 'Audio In', direction: 'input', signal: 'audio', index: 0, description: 'Audio signal to analyze', suggestedSources: ['VCO', 'VCA', 'Mixer'] },
+      { id: 'cv_out', name: 'CV Out', direction: 'output', signal: 'cv', index: 0, description: 'Envelope CV output (0–1)', suggestedTargets: ['VCF', 'VCA', 'VCO'] },
+    ],
+  },
+  clockDivider: {
+    type: 'clockDivider',
+    label: 'Clock Div',
+    description: 'Divides clock by /2, /4, /8, /16 — creates slower rhythms',
+    detailedDescription:
+      'Takes a clock input and outputs divided versions at /2, /4, /8, and /16 rates. Essential for creating polyrhythms, slower trigger patterns, and synchronized subdivisions. Gate length controls pulse width relative to clock interval.',
+    firstAddTip: 'Clock Divider creates slower rhythms. Connect an LFO (square) to Clock In, then use the divided outputs to trigger different modules!',
+    defaultParams: {
+      gateLength: 0.5,
+    },
+    ports: [
+      { id: 'clock_in', name: 'Clock In', direction: 'input', signal: 'gate', index: 0, description: 'Clock signal to divide', suggestedSources: ['LFO', 'Sequencer'] },
+      { id: 'reset_in', name: 'Reset', direction: 'input', signal: 'gate', index: 1, description: 'Reset counter to zero', suggestedSources: ['LFO', 'Keyboard'] },
+      { id: 'div2_out', name: '/2', direction: 'output', signal: 'gate', index: 0, description: 'Clock divided by 2', suggestedTargets: ['Envelope', 'Sequencer', 'Drum Synth'] },
+      { id: 'div4_out', name: '/4', direction: 'output', signal: 'gate', index: 1, description: 'Clock divided by 4', suggestedTargets: ['Envelope', 'Sequencer', 'Drum Synth'] },
+      { id: 'div8_out', name: '/8', direction: 'output', signal: 'gate', index: 2, description: 'Clock divided by 8', suggestedTargets: ['Envelope', 'Sequencer', 'Drum Synth'] },
+      { id: 'div16_out', name: '/16', direction: 'output', signal: 'gate', index: 3, description: 'Clock divided by 16', suggestedTargets: ['Envelope', 'Sequencer', 'Drum Synth'] },
+    ],
+  },
+  drumSynth: {
+    type: 'drumSynth',
+    label: 'Drum Synth',
+    description: 'Synthesized drums — kick, snare, and hihat voices',
+    detailedDescription:
+      'A single-voice drum synthesizer with three modes: kick (sine with pitch sweep), snare (sine + bandpass noise), and hihat (highpass noise). Gate input triggers the sound, with controls for pitch, decay, pitch envelope, noise level, and tone.',
+    firstAddTip: 'Drum Synth makes percussive sounds. Connect a gate signal (LFO square, Sequencer, or Euclidean) to trigger it, then send audio to Output!',
+    defaultParams: {
+      voice: 0,
+      pitch: 60,
+      decay: 0.3,
+      pitchDecay: 0.05,
+      pitchAmount: 2,
+      noiseLevel: 0.3,
+      tone: 0.5,
+      level: 0.8,
+    },
+    ports: [
+      { id: 'gate_in', name: 'Gate In', direction: 'input', signal: 'gate', index: 0, description: 'Trigger signal — starts drum hit on rising edge', suggestedSources: ['LFO', 'Sequencer', 'Euclidean', 'Clock Div'] },
+      { id: 'pitch_cv', name: 'Pitch CV', direction: 'input', signal: 'cv', index: 1, description: 'Modulate drum pitch via CV', suggestedSources: ['LFO', 'Sequencer'] },
+      { id: 'accent_cv', name: 'Accent CV', direction: 'input', signal: 'cv', index: 2, description: 'Accent input — adds velocity variation', suggestedSources: ['LFO', 'Envelope', 'S&H'] },
+      { id: 'audio_out', name: 'Audio Out', direction: 'output', signal: 'audio', index: 0, description: 'Drum audio output', suggestedTargets: ['Mixer', 'VCA', 'Output', 'Distortion'] },
+    ],
+  },
 };
 
 export function getModuleDefinition(type: ModuleType): ModuleDefinition {

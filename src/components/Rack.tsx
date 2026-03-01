@@ -36,6 +36,13 @@ import WavetablePanel from './modules/WavetablePanel.tsx';
 import ArpeggiatorPanel from './modules/ArpeggiatorPanel.tsx';
 import GranularPanel from './modules/GranularPanel.tsx';
 import LooperPanel from './modules/LooperPanel.tsx';
+import BitcrusherPanel from './modules/BitcrusherPanel.tsx';
+import CvMixerPanel from './modules/CvMixerPanel.tsx';
+import SlewLimiterPanel from './modules/SlewLimiterPanel.tsx';
+import DistortionPanel from './modules/DistortionPanel.tsx';
+import EnvelopeFollowerPanel from './modules/EnvelopeFollowerPanel.tsx';
+import ClockDividerPanel from './modules/ClockDividerPanel.tsx';
+import DrumSynthPanel from './modules/DrumSynthPanel.tsx';
 
 const PANEL_MAP: Record<ModuleType, React.ComponentType<{ moduleId: string }>> = {
   vco: VCOPanel,
@@ -67,6 +74,13 @@ const PANEL_MAP: Record<ModuleType, React.ComponentType<{ moduleId: string }>> =
   arpeggiator: ArpeggiatorPanel,
   granular: GranularPanel,
   looper: LooperPanel,
+  bitcrusher: BitcrusherPanel,
+  cvMixer: CvMixerPanel,
+  slewLimiter: SlewLimiterPanel,
+  distortion: DistortionPanel,
+  envelopeFollower: EnvelopeFollowerPanel,
+  clockDivider: ClockDividerPanel,
+  drumSynth: DrumSynthPanel,
 };
 
 const MIN_ZOOM = 0.25;

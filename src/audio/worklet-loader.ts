@@ -27,6 +27,13 @@ import wavetableUrl from './processors/wavetable-processor.ts?url';
 import arpeggiatorUrl from './processors/arpeggiator-processor.ts?url';
 import granularUrl from './processors/granular-processor.ts?url';
 import looperUrl from './processors/looper-processor.ts?url';
+import bitcrusherUrl from './processors/bitcrusher-processor.ts?url';
+import cvMixerUrl from './processors/cv-mixer-processor.ts?url';
+import slewLimiterUrl from './processors/slew-limiter-processor.ts?url';
+import distortionUrl from './processors/distortion-processor.ts?url';
+import envelopeFollowerUrl from './processors/envelope-follower-processor.ts?url';
+import clockDividerUrl from './processors/clock-divider-processor.ts?url';
+import drumSynthUrl from './processors/drum-synth-processor.ts?url';
 
 const processorUrls = [
   vcoUrl,
@@ -58,6 +65,13 @@ const processorUrls = [
   arpeggiatorUrl,
   granularUrl,
   looperUrl,
+  bitcrusherUrl,
+  cvMixerUrl,
+  slewLimiterUrl,
+  distortionUrl,
+  envelopeFollowerUrl,
+  clockDividerUrl,
+  drumSynthUrl,
 ];
 
 export async function loadAllProcessors(ctx: AudioContext): Promise<void> {

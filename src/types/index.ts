@@ -27,7 +27,14 @@ export type ModuleType =
   | 'wavetable'
   | 'arpeggiator'
   | 'granular'
-  | 'looper';
+  | 'looper'
+  | 'bitcrusher'
+  | 'cvMixer'
+  | 'slewLimiter'
+  | 'distortion'
+  | 'envelopeFollower'
+  | 'clockDivider'
+  | 'drumSynth';
 
 export type SignalType = 'audio' | 'cv' | 'gate';
 

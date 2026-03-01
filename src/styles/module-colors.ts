@@ -35,6 +35,13 @@ export const moduleColors: Record<ModuleType, ModuleColor> = {
   arpeggiator:  { primary: '#A880C8', secondary: '#C0A0D8' },
   granular:     { primary: '#78A858', secondary: '#98C078' },
   looper:       { primary: '#C04060', secondary: '#D86080' },
+  bitcrusher:   { primary: '#8850B0', secondary: '#A070C8' },
+  cvMixer:      { primary: '#90A060', secondary: '#A8B878' },
+  slewLimiter:  { primary: '#60A880', secondary: '#80C0A0' },
+  distortion:   { primary: '#C84040', secondary: '#E06060' },
+  envelopeFollower: { primary: '#D8A030', secondary: '#E8B850' },
+  clockDivider: { primary: '#5890C0', secondary: '#78A8D0' },
+  drumSynth:    { primary: '#D04858', secondary: '#E06878' },
 };
 
 export function getModuleColor(type: ModuleType): ModuleColor {

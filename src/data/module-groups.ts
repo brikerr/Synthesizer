@@ -24,6 +24,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       { type: 'stepSequencer', label: 'Sequencer' },
       { type: 'euclidean', label: 'Euclidean' },
       { type: 'arpeggiator', label: 'Arpeggiator' },
+      { type: 'drumSynth', label: 'Drum Synth' },
     ],
   },
   {
@@ -38,6 +39,9 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       { type: 'quantizer', label: 'Quantizer' },
       { type: 'sampleHold', label: 'S&H' },
       { type: 'probabilityGate', label: 'Prob Gate' },
+      { type: 'slewLimiter', label: 'Slew Limiter' },
+      { type: 'envelopeFollower', label: 'Env Follower' },
+      { type: 'clockDivider', label: 'Clock Div' },
     ],
   },
   {
@@ -50,6 +54,8 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       { type: 'wavefolder', label: 'Wavefolder' },
       { type: 'granular', label: 'Granular' },
       { type: 'looper', label: 'Looper' },
+      { type: 'bitcrusher', label: 'Bitcrusher' },
+      { type: 'distortion', label: 'Distortion' },
     ],
   },
   {
@@ -59,6 +65,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       { type: 'spectrum', label: 'Spectrum' },
       { type: 'macroKnobs', label: 'Macro Knobs' },
       { type: 'output', label: 'Output' },
+      { type: 'cvMixer', label: 'CV Mixer' },
     ],
   },
 ];
