@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Toolbar } from './components/Toolbar.tsx';
 import { Rack } from './components/Rack.tsx';
 import { Keyboard } from './components/Keyboard.tsx';
-import { PasswordGate } from './components/PasswordGate.tsx';
 import { ModuleSearch } from './components/ModuleSearch.tsx';
 import { ContextMenu } from './components/ContextMenu.tsx';
 import { useSynthStore } from './store/synth-store.ts';
@@ -50,7 +49,7 @@ export default function App() {
   );
 
   return (
-    <PasswordGate>
+    <>
       <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -67,6 +66,6 @@ export default function App() {
         onSelect={handleSearchSelect}
       />
       <ContextMenu />
-    </PasswordGate>
+    </>
   );
 }
